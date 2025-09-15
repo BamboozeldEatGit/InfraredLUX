@@ -42,6 +42,8 @@
   </div>
   <script>
     const video = document.getElementById('intro-video');
+    const overlay = document.getElementById('start-overlay');
+    let videoPlayed = false;
 
     video.addEventListener('loadstart', () => console.log('Video load started'));
     video.addEventListener('loadeddata', () => console.log('Video data loaded'));
@@ -55,19 +57,43 @@
     video.addEventListener('ended', function () {
       this.style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
+      sessionStorage.setItem('introPlayed', 'true');
       // Remove prevent skip listeners
       document.removeEventListener('keydown', preventSkip);
       document.removeEventListener('contextmenu', preventSkip);
       document.removeEventListener('dblclick', preventSkip);
     });
 
-    // Start video on click
-    const overlay = document.getElementById('start-overlay');
-    overlay.addEventListener('click', function() {
+    // Check if intro already played in session
+    if (sessionStorage.getItem('introPlayed') === 'true') {
       overlay.style.display = 'none';
-      video.play();
-      console.log('Video started');
-    });
+      video.style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+    } else {
+      // Start video on click
+      overlay.addEventListener('click', function() {
+        if (!videoPlayed) {
+          console.log('Overlay clicked');
+          overlay.style.display = 'none';
+          video.play().then(() => {
+            console.log('Video play started');
+            videoPlayed = true;
+          }).catch(e => {
+            console.log('Video play failed:', e);
+          });
+        }
+      });
+
+      // Prevent skipping
+      function preventSkip(e) {
+        console.log('Preventing skip event:', e.type);
+        e.preventDefault();
+      }
+
+      document.addEventListener('keydown', preventSkip);
+      document.addEventListener('contextmenu', preventSkip);
+      document.addEventListener('dblclick', preventSkip);
+    }
 
     // Prevent skipping
     function preventSkip(e) {
