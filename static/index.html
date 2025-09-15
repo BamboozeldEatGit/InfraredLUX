@@ -14,7 +14,10 @@
 </head>
 
 <body>
-  <div class="gradient">
+  <video id="intro-video" src="assets/media/infraredinrto.mp4"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; object-fit: cover;"></video>
+  <div id="start-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; cursor: pointer;">Click anywhere to start</div>
+  <div class="gradient" id="main-content" style="display: none;">
     <nav class="navbar">
       <div class="nav-content">
         <a href="/" class="nav-item">Home</a>
@@ -37,6 +40,45 @@
       <div class="ellipse e5"></div>
     </div>
   </div>
+  <script>
+    const video = document.getElementById('intro-video');
+
+    video.addEventListener('loadstart', () => console.log('Video load started'));
+    video.addEventListener('loadeddata', () => console.log('Video data loaded'));
+    video.addEventListener('canplay', () => console.log('Video can play'));
+    video.addEventListener('error', (e) => console.error('Video error:', e));
+    video.addEventListener('play', () => console.log('Video playing'));
+    video.addEventListener('pause', () => console.log('Video paused'));
+    video.addEventListener('ended', () => console.log('Video ended'));
+
+
+    video.addEventListener('ended', function () {
+      this.style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      // Remove prevent skip listeners
+      document.removeEventListener('keydown', preventSkip);
+      document.removeEventListener('contextmenu', preventSkip);
+      document.removeEventListener('dblclick', preventSkip);
+    });
+
+    // Start video on click
+    const overlay = document.getElementById('start-overlay');
+    overlay.addEventListener('click', function() {
+      overlay.style.display = 'none';
+      video.play();
+      console.log('Video started');
+    });
+
+    // Prevent skipping
+    function preventSkip(e) {
+      console.log('Preventing skip event:', e.type);
+      e.preventDefault();
+    }
+
+    document.addEventListener('keydown', preventSkip);
+    document.addEventListener('contextmenu', preventSkip);
+    document.addEventListener('dblclick', preventSkip);
+  </script>
 </body>
 
 </html>
