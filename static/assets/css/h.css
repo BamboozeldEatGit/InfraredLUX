@@ -2,7 +2,7 @@
     font-family: "Progesteron", sans-serif;
     font-size: 256px;
     font-weight: normal;
-    background: radial-gradient(circle, rgba(169, 255, 188, 1) 2.68%, rgba(255, 255, 255, 1) 99.48%);
+    background: white;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -10,6 +10,7 @@
     margin-bottom: 20px;
     max-width: 100%;
     text-align: center;
+    z-index: 1;
 }
 
 .subtitle {
@@ -33,3 +34,10 @@
     pointer-events: none;
 }
 
+.topfloat {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10001;
+}
