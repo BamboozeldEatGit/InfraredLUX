@@ -1,0 +1,7 @@
+name = "infraredLUX"
+main = "index.js"
+compatibility_date = "2025-09-08" # or a later date
+workers_dev = true
+
+[compatibility_flags]
+nodejs_compat = true
