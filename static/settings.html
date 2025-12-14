@@ -23,7 +23,7 @@
       <a href="/a" class="nav-item">Games</a>
       <a href="/b" class="nav-item">Apps</a>
       <a href="/d" class="nav-item">Tabs</a>
-      
+
       <a href="/c" class="nav-item">Settings</a>
     </div>
   </nav>
@@ -54,7 +54,7 @@
           some bugs.)
         </p>
         <select id="pChange">
-          <option value="uv">Ultra<an>vio</an>let (Default)</option>
+          <option value="uv">Infrared Turbo (Default)</option>
           <option value="dy">Dynamic (Doesn't work in about:blank)</option>
         </select>
       </div>
@@ -70,10 +70,10 @@
       </div>
       <div class="settings-card">
         <h3>Information</h3>
-        <p>Infrared Version: v0.9 Turbo</p>
-        <p>Recomended Launcher Version: v0.03 Beta</p>
-        <p>Interstellar Version: v5.2.6</p>
-        <p id="last-updated">Last Updated: 9/15/2025</p>
+        <p>Infrared Version: v0.10 Turbo</p>
+        <p>Recomended Launcher Version: IR v0.03 ignition</p>
+        <p>Interstellar Version: v6.1.4</p>
+        <p id="last-updated">Last Updated: 12/13/25</p>
         <p>Infrared is a project by Interstellar
         <p>
         <p>Infrared is add-free forever.
@@ -83,6 +83,42 @@
   </div>
   <script src="/assets/js/001.js?v=001"></script>
   <script src="/assets/js/006.js?v=000"></script>
+
+  <script>
+    // Auto-hide navigation bar
+    const navbar = document.querySelector('.navbar');
+    let hideTimeout;
+
+    function showNavbar() {
+      navbar.classList.add('visible');
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        navbar.classList.remove('visible');
+      }, 2000); // Hide after 2 seconds of no mouse movement
+    }
+
+    function handleMouseMove(event) {
+      // Show navbar if mouse is within 60px of top of screen
+      if (event.clientY <= 60) {
+        showNavbar();
+      }
+    }
+
+    // Show navbar on mouse movement near top
+    document.addEventListener('mousemove', handleMouseMove);
+
+    // Show navbar on scroll to top
+    window.addEventListener('scroll', () => {
+      if (window.scrollY === 0) {
+        showNavbar();
+      }
+    });
+
+    // Show navbar initially for a brief moment
+    setTimeout(() => {
+      showNavbar();
+    }, 500);
+  </script>
 </body>
 
 </html>

@@ -45,6 +45,42 @@
   <script src="./assets/mathematics/config.js?v=2025-04-15"></script>
   <script src="assets/js/003.js?v=000"></script>
   <script src="/assets/js/001.js?v=001"></script>
+
+  <script>
+    // Auto-hide navigation bar
+    const navbar = document.querySelector('.navbar');
+    let hideTimeout;
+
+    function showNavbar() {
+      navbar.classList.add('visible');
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        navbar.classList.remove('visible');
+      }, 2000); // Hide after 2 seconds of no mouse movement
+    }
+
+    function handleMouseMove(event) {
+      // Show navbar if mouse is within 60px of top of screen
+      if (event.clientY <= 60) {
+        showNavbar();
+      }
+    }
+
+    // Show navbar on mouse movement near top
+    document.addEventListener('mousemove', handleMouseMove);
+
+    // Show navbar on scroll to top
+    window.addEventListener('scroll', () => {
+      if (window.scrollY === 0) {
+        showNavbar();
+      }
+    });
+
+    // Show navbar initially for a brief moment
+    setTimeout(() => {
+      showNavbar();
+    }, 500);
+  </script>
 </body>
 
 </html>

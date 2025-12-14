@@ -129,23 +129,24 @@ class UVServiceWorker extends EventEmitter {
           ? u.returnValue
           : new Response(c.body, {
               headers: c.headers,
-              status: c.status,
-              statusText: c.statusText,
+              status: Math.max(200, Math.min(599, c.status || 200)), // Ensure valid status code
+              statusText: c.statusText || "OK",
             })
       );
     } catch (e) {
-      return new Response(e.toString(), { status: 500 });
+      return new Response(e.toString(), { status: 500, statusText: "Internal Server Error" });
     }
   }
   getBarerResponse(e) {
     const t = {},
       r = JSON.parse(e.headers.get("x-bare-headers"));
     for (const e in r) t[e.toLowerCase()] = r[e];
+    const statusCode = +e.headers.get("x-bare-status") || 200;
     return {
       headers: t,
-      status: +e.headers.get("x-bare-status"),
-      statusText: e.headers.get("x-bare-status-text"),
-      body: this.statusCode.empty.includes(+e.headers.get("x-bare-status"))
+      status: Math.max(100, Math.min(599, statusCode)), // Ensure valid HTTP status code
+      statusText: e.headers.get("x-bare-status-text") || "OK",
+      body: this.statusCode.empty.includes(statusCode)
         ? null
         : e.body,
     };

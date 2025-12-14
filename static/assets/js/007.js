@@ -1,28 +1,66 @@
 // t.js
 window.addEventListener("load", () => {
-  navigator.serviceWorker.register("../sw.js?v=2025-04-15", { scope: "/a/" });
+  // Wait for config to be available before registering service worker
+  const waitForConfig = setInterval(() => {
+    if (typeof __uv$config !== 'undefined') {
+      clearInterval(waitForConfig);
+      navigator.serviceWorker.register("../sw.js?v=2025-04-15", { scope: "/a/" })
+        .then(registration => {
+          console.log('Mathematics SW registered:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Mathematics SW registration failed:', error);
+        });
+    }
+  }, 100);
+
   const form = document.getElementById("fv");
   const input = document.getElementById("iv");
-  if (form && input) {
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
-      const formValue = input.value.trim();
-      const url = isUrl(formValue)
-        ? prependHttps(formValue)
-        : `https://www.google.com/search?q=${formValue}`;
-      processUrl(url);
+  if (input) {
+    // Handle Enter key press on the input field
+    input.addEventListener("keydown", async event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const formValue = input.value.trim();
+        const url = isUrl(formValue)
+          ? prependHttps(formValue)
+          : `https://www.google.com/search?q=${formValue}`;
+        processUrl(url);
+      }
     });
+
+    // Keep form submit as fallback
+    if (form) {
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const formValue = input.value.trim();
+        const url = isUrl(formValue)
+          ? prependHttps(formValue)
+          : `https://www.google.com/search?q=${formValue}`;
+        processUrl(url);
+      });
+    }
   }
   function processUrl(url) {
-    sessionStorage.setItem("GoUrl", __uv$config.encodeUrl(url));
-    const iframeContainer = document.getElementById("frame-container");
-    const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
-      iframe => iframe.classList.contains("active"),
-    );
-    activeIframe.src = `/a/${__uv$config.encodeUrl(url)}`;
-    activeIframe.dataset.tabUrl = url;
-    input.value = url;
-    console.log(activeIframe.dataset.tabUrl);
+    if (typeof __uv$config === 'undefined') {
+      console.error('__uv$config not available');
+      return;
+    }
+    try {
+      const encodedUrl = __uv$config.encodeUrl(url);
+      sessionStorage.setItem("GoUrl", encodedUrl);
+      const iframeContainer = document.getElementById("frame-container");
+      const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
+        iframe => iframe.classList.contains("active"),
+      );
+      activeIframe.src = `/a/${encodedUrl}`;
+      activeIframe.dataset.tabUrl = url;
+      input.value = url;
+      console.log("Original URL:", url);
+      console.log("Encoded URL:", encodedUrl);
+    } catch (error) {
+      console.error("Error encoding URL:", error);
+    }
   }
   function isUrl(val = "") {
     if (
@@ -83,11 +121,23 @@ document.addEventListener("DOMContentLoaded", event => {
       const title = newIframe.contentDocument.title;
       if (title.length <= 1) {
         tabTitle.textContent = "Tab";
-      } else {
+      } else if (title.length <= 100) {
         tabTitle.textContent = title;
+      } else {
+        // Show only the domain part of the URL
+        const currentUrl = newIframe.contentWindow.location.href;
+        try {
+          const url = new URL(currentUrl);
+          tabTitle.textContent = url.hostname;
+        } catch (e) {
+          // Fallback if URL parsing fails
+          tabTitle.textContent = "Tab";
+        }
       }
       newIframe.contentWindow.open = url => {
-        sessionStorage.setItem("URL", `/a/${__uv$config.encodeUrl(url)}`);
+        if (typeof __uv$config !== 'undefined') {
+          sessionStorage.setItem("URL", `/a/${__uv$config.encodeUrl(url)}`);
+        }
         createNewTab();
         return null;
       };
@@ -107,7 +157,7 @@ document.addEventListener("DOMContentLoaded", event => {
           newIframe.src = `${window.location.origin}/a/${goUrl}`;
         }
       } else {
-        newIframe.src = "/";
+        newIframe.src = "search-start.html";
       }
     } else if (tabCounter > 1) {
       if (url !== null) {
@@ -120,7 +170,7 @@ document.addEventListener("DOMContentLoaded", event => {
           newIframe.src = `${window.location.origin}/a/${goUrl}`;
         }
       } else {
-        newIframe.src = "/";
+        newIframe.src = "search-start.html";
       }
     }
 
@@ -207,6 +257,7 @@ document.addEventListener("DOMContentLoaded", event => {
   });
   createNewTab();
 });
+
 // Reload
 function reload() {
   const activeIframe = document.querySelector("#frame-container iframe.active");
@@ -307,7 +358,9 @@ function Home() {
   window.location.href = "./";
 }
 const homeButton = document.getElementById("home-page");
-homeButton.addEventListener("click", Home);
+if (homeButton) {
+  homeButton.addEventListener("click", Home);
+}
 // Back
 function goBack() {
   const activeIframe = document.querySelector("#frame-container iframe.active");
@@ -330,7 +383,7 @@ function goForward() {
     console.error("No active iframe found");
   }
 }
-// Remove Nav
+// Toggle Tabs Sidebar
 document.addEventListener("DOMContentLoaded", () => {
   const tb = document.getElementById("tabs-button");
   const nb = document.getElementById("right-side-nav");
@@ -338,20 +391,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeIframe = document.querySelector("#frame-container iframe.active");
     if (nb.style.display === "none") {
       nb.style.display = "";
-      activeIframe.style.top = "10%";
-      activeIframe.style.height = "90%";
+      activeIframe.style.width = "calc(100vw - 550px)"; // Account for left sidebar (300px) + right sidebar (250px)
       tb.querySelector("i").classList.remove("fa-magnifying-glass-plus");
       tb.querySelector("i").classList.add("fa-magnifying-glass-minus");
     } else {
       nb.style.display = "none";
-      activeIframe.style.top = "5%";
-      activeIframe.style.height = "95%";
+      activeIframe.style.width = "calc(100vw - 300px)"; // Account for left sidebar only
       tb.querySelector("i").classList.remove("fa-magnifying-glass-minus");
       tb.querySelector("i").classList.add("fa-magnifying-glass-plus");
     }
   });
 });
-if (navigator.userAgent.includes("Chrome")) {
+if (navigator.userAgent.includes("Chrome") && navigator.keyboard && navigator.keyboard.lock) {
   window.addEventListener("resize", () => {
     navigator.keyboard.lock(["Escape"]);
   });
@@ -368,19 +419,22 @@ function Load() {
         .replace(window.location.origin, "")
         .replace("/a/", "");
       localStorage.setItem("decoded", websitePath);
-      const decodedValue = decodeXor(websitePath);
+      const decodedValue = __uv$config ? __uv$config.decodeUrl(websitePath) : decodeXor(websitePath);
       document.getElementById("iv").value = decodedValue;
     } else if (website.includes("/a/q/")) {
       const websitePath = website
         .replace(window.location.origin, "")
         .replace("/a/q/", "");
-      const decodedValue = decodeXor(websitePath);
+      const decodedValue = __uv$config ? __uv$config.decodeUrl(websitePath) : decodeXor(websitePath);
       localStorage.setItem("decoded", websitePath);
       document.getElementById("iv").value = decodedValue;
     } else {
       const websitePath = website.replace(window.location.origin, "");
-      document.getElementById("iv").value = websitePath;
-      localStorage.setItem("decoded", websitePath);
+      // Don't show search-start.html in the URL bar, keep it empty with placeholder
+      if (!websitePath.includes("search-start.html")) {
+        document.getElementById("iv").value = websitePath;
+        localStorage.setItem("decoded", websitePath);
+      }
     }
   }
 }
@@ -393,7 +447,7 @@ function decodeXor(input) {
     decodeURIComponent(str)
       .split("")
       .map((char, ind) =>
-        ind % 2 ? String.fromCharCode(char.charCodeAt(Number.NaN) ^ 2) : char,
+        ind % 2 ? String.fromCharCode(char.charCodeAt() ^ 2) : char,
       )
       .join("") + (search.length ? `?${search.join("?")}` : "")
   );

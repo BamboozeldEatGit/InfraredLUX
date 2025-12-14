@@ -2,6 +2,8 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { createBareServer } from "@nebula-services/bare-server-node";
+import { uvPath as ultravioletPath } from "@titaniumnetwork-dev/ultraviolet";
+import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 import chalk from "chalk";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -17,7 +19,7 @@ console.log(chalk.yellow("🚀 Starting server..."));
 const __dirname = process.cwd();
 const server = http.createServer();
 const app = express();
-const bareServer = createBareServer("/ca/");
+const bareServer = createBareServer("/baremux/");
 const PORT = process.env.PORT || 8080;
 const cache = new Map();
 const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // Cache for 30 Days
@@ -95,7 +97,8 @@ app.use(express.urlencoded({ extended: true }));
 } */
 
 app.use(express.static(path.join(__dirname, "static")));
-app.use("/ca", cors({ origin: true }));
+app.use("/uv", express.static(ultravioletPath));
+app.use("/baremux", express.static(baremuxPath));
 
 const routes = [
   { path: "/b", file: "apps.html" },
@@ -111,6 +114,12 @@ routes.forEach(route => {
   app.get(route.path, (_req, res) => {
     res.sendFile(path.join(__dirname, "static", route.file));
   });
+  // Add POST routes for forms that might submit to these paths
+  if (route.path === "/d") {
+    app.post(route.path, (_req, res) => {
+      res.sendFile(path.join(__dirname, "static", route.file));
+    });
+  }
 });
 
 app.use((req, res, next) => {

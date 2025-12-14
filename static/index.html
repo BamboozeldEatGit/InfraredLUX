@@ -14,13 +14,40 @@
 </head>
 
 <body>
-  <video id="intro-video" src="assets/media/infraredintro2.mp4"
-    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; object-fit: cover;"></video>
-  <div id="start-overlay"
-    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; cursor: pointer;">
-    Click anywhere to start</div>
   <img src="topfloat.png" class="topfloat" alt="">
-  <div class="gradient" id="main-content" style="display: none;">
+  <div class="gradient" id="main-content">
+    <!-- What's New Modal -->
+    <div id="whats-new-modal" class="whats-new-modal">
+      <div class="whats-new-content">
+        <div class="whats-new-header">
+          <h2>What's New in v0.10 Turbo</h2>
+          <button class="close-modal" onclick="closeWhatsNew()">×</button>
+        </div>
+        <div class="whats-new-body">
+          <div class="update-item">
+            <h3>UI Revamp</h3>
+            <p>Complete visual overhaul with modern design, improved typography, and enhanced user experience.</p>
+          </div>
+          <div class="update-item">
+            <h3>Random Tip System</h3>
+            <p>Dynamic tips that randomly cycle below the title with smooth fade transitions.</p>
+          </div>
+          <div class="update-item">
+            <h3>Infrared Turbo Proxy</h3>
+            <p>New default proxy option for faster and more reliable content access.</p>
+          </div>
+          <div class="update-item">
+            <h3>Version Updates</h3>
+            <p>Updated to Infrared v0.10 Turbo with Interstellar v6.1.4 and launcher IR v0.03 ignition.</p>
+          </div>
+          <div class="update-item">
+            <h3>Expanded Tips Collection</h3>
+            <p>20+ fun and helpful tips to discover while browsing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <nav class="navbar">
       <div class="nav-content">
         <a href="/" class="nav-item">Home</a>
@@ -33,7 +60,7 @@
     </nav>
     <div class="main">
       <h1 class="title">INFRARED</h1>
-      <p class="subtitle">Using Interstellar to push boundary's of luxury at school</p>
+      <p class="subtitle" id="dynamic-subtitle">Using Interstellar to push boundary's of luxury at school</p>
     </div>
     <div class="blur-group">
       <div class="ellipse e1"></div>
@@ -43,70 +70,137 @@
       <div class="ellipse e5"></div>
     </div>
   </div>
+
   <script>
-    const video = document.getElementById('intro-video');
-    const overlay = document.getElementById('start-overlay');
-    let videoPlayed = false;
+    // Auto-hide navigation bar
+    const navbar = document.querySelector('.navbar');
+    let hideTimeout;
 
-    video.addEventListener('loadstart', () => console.log('Video load started'));
-    video.addEventListener('loadeddata', () => console.log('Video data loaded'));
-    video.addEventListener('canplay', () => console.log('Video can play'));
-    video.addEventListener('error', (e) => console.error('Video error:', e));
-    video.addEventListener('play', () => console.log('Video playing'));
-    video.addEventListener('pause', () => console.log('Video paused'));
-    video.addEventListener('ended', () => console.log('Video ended'));
+    function showNavbar() {
+      navbar.classList.add('visible');
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        navbar.classList.remove('visible');
+      }, 2000); // Hide after 2 seconds of no mouse movement
+    }
 
+    function handleMouseMove(event) {
+      // Show navbar if mouse is within 60px of top of screen
+      if (event.clientY <= 60) {
+        showNavbar();
+      }
+    }
 
-    video.addEventListener('ended', function () {
-      this.style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
-      sessionStorage.setItem('introPlayed', 'true');
-      // Remove prevent skip listeners
-      document.removeEventListener('keydown', preventSkip);
-      document.removeEventListener('contextmenu', preventSkip);
-      document.removeEventListener('dblclick', preventSkip);
+    // Show navbar on mouse movement near top
+    document.addEventListener('mousemove', handleMouseMove);
+
+    // Show navbar on scroll to top
+    window.addEventListener('scroll', () => {
+      if (window.scrollY === 0) {
+        showNavbar();
+      }
     });
 
-    // Check if intro already played in session
-    if (sessionStorage.getItem('introPlayed') === 'true') {
-      overlay.style.display = 'none';
-      video.style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
-    } else {
-      // Start video on click
-      overlay.addEventListener('click', function () {
-        if (!videoPlayed) {
-          console.log('Overlay clicked');
-          overlay.style.display = 'none';
-          video.play().then(() => {
-            console.log('Video play started');
-            videoPlayed = true;
-          }).catch(e => {
-            console.log('Video play failed:', e);
-          });
+    // Show navbar initially for a brief moment
+    setTimeout(() => {
+      showNavbar();
+    }, 500);
+
+    let tips = [];
+    let currentTipIndex = 0;
+    let subtitleElement;
+
+    // Load tips and start cycling
+    async function loadTips() {
+      try {
+        const response = await fetch('/tips.json');
+        tips = await response.json();
+        subtitleElement = document.getElementById('dynamic-subtitle');
+
+        if (tips.length > 0) {
+          // Start at random tip
+          currentTipIndex = Math.floor(Math.random() * tips.length);
+
+          // Display random starting tip with fade in
+          subtitleElement.textContent = tips[currentTipIndex].content;
+          subtitleElement.style.opacity = '1';
+
+          // Start cycling through tips every 7 seconds with smooth transitions
+          setTimeout(startTipCycle, 6500); // Start after 6.5 seconds (7 - 0.5 fade time)
         }
-      });
-
-      // Prevent skipping
-      function preventSkip(e) {
-        console.log('Preventing skip event:', e.type);
-        e.preventDefault();
+      } catch (error) {
+        console.error('Failed to load tips:', error);
       }
-
-      document.addEventListener('keydown', preventSkip);
-      document.addEventListener('contextmenu', preventSkip);
-      document.addEventListener('dblclick', preventSkip);
     }
 
-    // Prevent skipping
-    function preventSkip(e) {
-      console.log('Preventing skip event:', e.type);
-      e.preventDefault();
+    function startTipCycle() {
+      // Fade out current tip
+      subtitleElement.style.opacity = '0';
+
+      // After fade out completes, change to random tip and fade back in
+      setTimeout(() => {
+        let newTipIndex;
+        do {
+          newTipIndex = Math.floor(Math.random() * tips.length);
+        } while (tips.length > 1 && newTipIndex === currentTipIndex); // Avoid showing same tip consecutively
+
+        currentTipIndex = newTipIndex;
+        subtitleElement.textContent = tips[currentTipIndex].content;
+        subtitleElement.style.opacity = '1';
+
+        // Schedule next cycle
+        setTimeout(startTipCycle, 6500);
+      }, 500); // Wait for fade out to complete (0.5s)
     }
 
-    document.addEventListener('keydown', preventSkip);
-    document.addEventListener('contextmenu', preventSkip);
-    document.addEventListener('dblclick', preventSkip);
+    // Load tips when page loads
+    loadTips();
+
+    // What's New Modal Functionality
+    function checkWhatsNewCookie() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'whatsNewShown') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function setWhatsNewCookie() {
+      // Set cookie to expire in 30 days
+      const date = new Date();
+      date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+      document.cookie = `whatsNewShown=true; expires=${date.toUTCString()}; path=/`;
+    }
+
+    function showWhatsNew() {
+      const modal = document.getElementById('whats-new-modal');
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeWhatsNew() {
+      const modal = document.getElementById('whats-new-modal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto'; // Restore scrolling
+      setWhatsNewCookie();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('whats-new-modal').addEventListener('click', function (event) {
+      if (event.target === this) {
+        closeWhatsNew();
+      }
+    });
+
+    // Check if we should show what's new on page load
+    window.addEventListener('load', function () {
+      if (!checkWhatsNewCookie()) {
+        setTimeout(showWhatsNew, 1000); // Show after 1 second for better UX
+      }
+    });
   </script>
 </body>
 
