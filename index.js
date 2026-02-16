@@ -1,7 +1,5 @@
-import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import next from "next";
 import { createBareServer } from "@nebula-services/bare-server-node";
 import { uvPath as ultravioletPath } from "@titaniumnetwork-dev/ultraviolet";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
@@ -17,9 +15,7 @@ import config from "./config.js";
 const __dirname = process.cwd();
 const PORT = Number(process.env.PORT || 8080);
 const dev = process.env.NODE_ENV !== "production";
-
-const nextApp = next({ dev, port: PORT });
-const nextHandler = nextApp.getRequestHandler();
+let nextHandler = null;
 
 const server = http.createServer();
 const app = express();
@@ -91,7 +87,35 @@ app.use(express.static(path.join(__dirname, "static"), { index: false }));
 app.use("/uv", express.static(ultravioletPath));
 app.use("/baremux", express.static(baremuxPath));
 
-app.all("*", (req, res) => nextHandler(req, res));
+const staticRoutes = [
+  { path: "/b", file: "apps.html" },
+  { path: "/a", file: "games.html" },
+  { path: "/play.html", file: "games.html" },
+  { path: "/c", file: "settings.html" },
+  { path: "/d", file: "tabs.html" },
+  { path: "/", file: "index.html" },
+];
+
+const registerStaticFallbackRoutes = () => {
+  staticRoutes.forEach(route => {
+    app.get(route.path, (_req, res) => {
+      res.sendFile(path.join(__dirname, "static", route.file));
+    });
+  });
+
+  app.all("*", (_req, res) => {
+    res.status(404).sendFile(path.join(__dirname, "static", "404.html"));
+  });
+};
+
+const registerNextCatchAllRoute = () => {
+  app.all("*", (req, res) => {
+    if (!nextHandler) {
+      return res.status(503).send("Next.js handler is not ready.");
+    }
+    return nextHandler(req, res);
+  });
+};
 
 server.on("request", (req, res) => {
   if (bareServer.shouldRoute(req)) {
@@ -113,12 +137,28 @@ server.on("listening", () => {
   console.log(chalk.green(`Server is running on http://localhost:${PORT}`));
 });
 
-nextApp
-  .prepare()
-  .then(() => {
-    server.listen({ port: PORT });
-  })
-  .catch(error => {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  });
+const start = async () => {
+  // In Vercel serverless runtime, loading Next internals through custom server
+  // can fail. Fall back to static routes instead of crashing the process.
+  if (!process.env.VERCEL) {
+    try {
+      const { default: next } = await import("next");
+      const nextApp = next({ dev, port: PORT });
+      await nextApp.prepare();
+      nextHandler = nextApp.getRequestHandler();
+      registerNextCatchAllRoute();
+    } catch (error) {
+      console.error("Failed to initialize Next.js, using static fallback:", error);
+      registerStaticFallbackRoutes();
+    }
+  } else {
+    registerStaticFallbackRoutes();
+  }
+
+  server.listen({ port: PORT });
+};
+
+start().catch(error => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
+});
