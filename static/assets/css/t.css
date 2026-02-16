@@ -1,24 +1,148 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
+html,
 body {
-   font-family: "JetBrains Mono", monospace;
-   text-decoration: none;
    margin: 0;
-   overflow-x: hidden;
-   overflow-y: hidden;
-   background: var(--background-color);
+   padding: 0;
+   width: 100%;
+   height: 100%;
+   overflow: hidden;
+   background-color: rgba(36, 36, 36, 1);
+   font-family: "JetBrains Mono", monospace;
+   background-image: none !important;
+}
+
+body {
+   text-decoration: none;
    color: var(--text-primary);
+   --sidebar-width: 310px;
+   --topbar-height: 0px;
+   position: relative;
 }
 
 .nav {
-   padding: 1rem;
-   transition: transform 0.5s ease;
-   border-radius: 0 10px 10px 0;
-   transform: translateX(0);
-   width: 100vw;
-   height: 0.5vw;
+   width: 100%;
+   height: 100%;
+   box-sizing: border-box;
+   padding: 14px 10px;
+   display: flex;
+   flex-direction: column;
+   align-items: stretch;
+   gap: 10px;
+}
+
+.sidebar-controls {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+}
+
+.browser-shell {
+   background: rgba(22, 23, 29, 0.96);
+   border: 1px solid rgba(255, 255, 255, 0.08);
+   border-radius: 12px;
+   padding: 8px;
+   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+}
+
+.browser-top-row {
    display: flex;
    align-items: center;
+   gap: 4px;
+   margin-bottom: 8px;
+}
+
+.browser-grow {
+   flex: 1;
+}
+
+.browser-url-row {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+}
+
+.browser-url-form {
+   flex: 1;
+   min-width: 0;
+}
+
+.browser-url-actions {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+}
+
+.side-bar {
+   width: 100%;
+   min-width: 0;
+}
+
+#tabs-list-wrapper {
+   display: flex;
+   flex-direction: column;
+   flex: 1;
+   min-height: 0;
+}
+
+#tabs-list-wrapper.is-hidden {
+   display: none;
+}
+
+.wallpaper-blur {
+   position: fixed;
+   inset: 0;
+   background-image: url('/assets/media/homebg.png');
+   background-size: cover;
+   background-position: center;
+   filter: blur(600px);
+   transform: scale(1.1);
+   z-index: 1;
+}
+
+.sidebar {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: var(--sidebar-width);
+   height: 100vh;
+   z-index: 110;
+   transform: translateX(0);
+   transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+   flex-shrink: 0;
+   will-change: transform;
+}
+
+body.sidebar-collapsed .sidebar {
+   transform: translateX(-310px);
+}
+
+#right-side-nav.is-hidden {
+   opacity: 0;
+   pointer-events: none;
+}
+
+.tabs-web {
+   position: relative;
+   margin-top: 10px;
+   margin-right: 10px;
+   margin-bottom: 10px;
+   margin-left: 0;
+   width: calc(100% - 320px);
+   height: calc(100% - 20px);
+   background-color: rgba(30, 30, 30, 1);
+   border-radius: 5px;
+   z-index: 5;
+   overflow: hidden;
+   transition: left 0.58s cubic-bezier(0.22, 1, 0.36, 1), width 0.58s cubic-bezier(0.22, 1, 0.36, 1), margin-left 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+   left: 310px;
+   will-change: left, width, margin-left;
+}
+
+body.sidebar-collapsed .tabs-web {
+   left: 0;
+   width: calc(100% - 20px);
+   margin-left: 10px;
 }
 
 .close-tab {
@@ -44,9 +168,9 @@ body {
    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
    box-sizing: border-box;
    transition: transform 0.3s ease;
-   z-index: 100;
-   width: 100vw;
-   position: fixed;
+   z-index: 1000;
+   width: 100%;
+   position: absolute;
    transform: translateY(-100%);
    backdrop-filter: blur(8px);
    -webkit-backdrop-filter: blur(8px);
@@ -59,7 +183,7 @@ body {
 }
 
 .nav-button {
-   border-radius: 6px;
+   border-radius: 8px;
    border: none;
    outline: none;
    -webkit-appearance: none;
@@ -67,10 +191,10 @@ body {
    appearance: none;
    color: var(--text-primary, #e0e0e0);
    background: transparent;
-   height: 28px;
-   width: 32px;
+   height: 30px;
+   width: 30px;
    box-sizing: border-box;
-   margin-right: 8px;
+   margin-right: 0;
    transition: all 0.15s ease;
    display: inline-flex;
    align-items: center;
@@ -81,11 +205,19 @@ body {
 }
 
 .nav-button:hover {
-   background: transparent;
+   background: rgba(255, 255, 255, 0.08);
    color: var(--text-primary, #ffffff);
-   transform: scale(1.05);
+   transform: translateY(-1px);
    cursor: pointer;
    outline: none;
+}
+
+.browser-icon-btn {
+   background: rgba(255, 255, 255, 0.03);
+}
+
+.browser-badge-btn {
+   background: rgba(255, 255, 255, 0.09);
 }
 
 /* Ensure FontAwesome icons have no borders or backgrounds */
@@ -136,13 +268,13 @@ body {
 }
 
 .bar {
-   background: rgba(255, 255, 255, 0.05);
-   border: 1px solid rgba(255, 255, 255, 0.08);
+   background: rgba(255, 255, 255, 0.11);
+   border: 1px solid rgba(255, 255, 255, 0.1);
    color: var(--text-primary, #e0e0e0);
    flex: 1;
-   min-width: 200px;
-   height: 28px;
-   border-radius: 6px;
+   min-width: 0;
+   height: 34px;
+   border-radius: 8px;
    padding: 0 12px;
    font-family: "JetBrains Mono", monospace;
    font-size: 13px;
@@ -154,8 +286,8 @@ body {
 }
 
 .bar:focus {
-   background: rgba(255, 255, 255, 0.08);
-   border-color: rgba(255, 255, 255, 0.2);
+   background: rgba(255, 255, 255, 0.16);
+   border-color: rgba(255, 255, 255, 0.24);
    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
    color: var(--text-primary, #ffffff);
 }
@@ -218,18 +350,23 @@ ul {
    list-style-type: none;
    padding: 0;
    display: flex;
+   flex-direction: column;
+   gap: 8px;
+   margin: 0;
+   overflow-y: auto;
+   flex: 1;
 }
 
 li {
    padding: 0.4rem;
    background-color: var(--background-settings);
-   margin-right: 0.5rem;
+   margin-right: 0;
    cursor: pointer;
    border-radius: 5px;
    transition: background-color 0.3s ease;
    display: flex;
    align-items: center;
-   justify-content: center;
+   justify-content: space-between;
 }
 
 li.active {
@@ -241,12 +378,13 @@ li:hover {
 }
 
 .frame-container {
-   position: fixed;
-   top: 40px; /* Below the nav-bar */
+   position: absolute;
+   top: 0;
    left: 0;
    width: 100%;
-   height: calc(100vh - 40px);
+   height: 100%;
    background: var(--background-color);
+   z-index: 5;
 }
 
 iframe {
@@ -256,6 +394,12 @@ iframe {
    border: none;
    left: 0;
    top: 0;
+}
+
+#nav-wrapper {
+   position: absolute;
+   inset: 0 0 auto 0;
+   z-index: 120;
 }
 
 

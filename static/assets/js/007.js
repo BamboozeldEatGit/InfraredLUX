@@ -83,6 +83,18 @@ document.addEventListener("DOMContentLoaded", event => {
   const tabList = document.getElementById("tab-list");
   const iframeContainer = document.getElementById("frame-container");
   let tabCounter = 1;
+
+  const pendingGoUrl = localStorage.getItem("InfraredPendingGoUrl");
+  const pendingRawUrl = localStorage.getItem("InfraredPendingRawUrl");
+  if (pendingGoUrl) {
+    sessionStorage.setItem("GoUrl", pendingGoUrl);
+    localStorage.removeItem("InfraredPendingGoUrl");
+  }
+  if (pendingRawUrl) {
+    sessionStorage.setItem("GoUrlRaw", pendingRawUrl);
+    localStorage.removeItem("InfraredPendingRawUrl");
+  }
+
   addTabButton.addEventListener("click", () => {
     createNewTab();
     Load();
@@ -146,6 +158,16 @@ document.addEventListener("DOMContentLoaded", event => {
       }
       Load();
     });
+    const goUrlRaw = sessionStorage.getItem("GoUrlRaw");
+    if (goUrlRaw && typeof __uv$config !== "undefined") {
+      try {
+        sessionStorage.setItem("GoUrl", __uv$config.encodeUrl(goUrlRaw));
+      } catch (error) {
+        console.error("Error encoding pending raw URL:", error);
+      }
+      sessionStorage.removeItem("GoUrlRaw");
+    }
+
     const goUrl = sessionStorage.getItem("GoUrl");
     const url = sessionStorage.getItem("URL");
 
@@ -156,6 +178,7 @@ document.addEventListener("DOMContentLoaded", event => {
         } else {
           newIframe.src = `${window.location.origin}/a/${goUrl}`;
         }
+        sessionStorage.removeItem("GoUrl");
       } else {
         newIframe.src = "search-start.html";
       }
@@ -169,6 +192,7 @@ document.addEventListener("DOMContentLoaded", event => {
         } else {
           newIframe.src = `${window.location.origin}/a/${goUrl}`;
         }
+        sessionStorage.removeItem("GoUrl");
       } else {
         newIframe.src = "search-start.html";
       }
@@ -386,17 +410,15 @@ function goForward() {
 // Toggle Tabs Sidebar
 document.addEventListener("DOMContentLoaded", () => {
   const tb = document.getElementById("tabs-button");
-  const nb = document.getElementById("right-side-nav");
+  const listWrapper = document.getElementById("tabs-list-wrapper");
+  if (!tb || !listWrapper) return;
   tb.addEventListener("click", () => {
-    const activeIframe = document.querySelector("#frame-container iframe.active");
-    if (nb.style.display === "none") {
-      nb.style.display = "";
-      activeIframe.style.width = "calc(100vw - 550px)"; // Account for left sidebar (300px) + right sidebar (250px)
+    if (listWrapper.classList.contains("is-hidden")) {
+      listWrapper.classList.remove("is-hidden");
       tb.querySelector("i").classList.remove("fa-magnifying-glass-plus");
       tb.querySelector("i").classList.add("fa-magnifying-glass-minus");
     } else {
-      nb.style.display = "none";
-      activeIframe.style.width = "calc(100vw - 300px)"; // Account for left sidebar only
+      listWrapper.classList.add("is-hidden");
       tb.querySelector("i").classList.remove("fa-magnifying-glass-minus");
       tb.querySelector("i").classList.add("fa-magnifying-glass-plus");
     }

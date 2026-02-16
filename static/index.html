@@ -11,68 +11,50 @@
   <link rel="stylesheet" href="/assets/css/global.css?v=6" />
   <link rel="stylesheet" href="/assets/css/h.css?v=01" />
   <link rel="stylesheet" href="/assets/css/nav.css?v=01" />
+  <link rel="stylesheet" href="/assets/css/home_v3.css?v=04" />
 </head>
 
 <body>
-  <img src="topfloat.png" class="topfloat" alt="">
-  <div class="gradient" id="main-content">
-    <!-- What's New Modal -->
-    <div id="whats-new-modal" class="whats-new-modal">
-      <div class="whats-new-content">
-        <div class="whats-new-header">
-          <h2>What's New in v0.10 Turbo</h2>
-          <button class="close-modal" onclick="closeWhatsNew()">×</button>
-        </div>
-        <div class="whats-new-body">
-          <div class="update-item">
-            <h3>UI Revamp</h3>
-            <p>Complete visual overhaul with modern design, improved typography, and enhanced user experience.</p>
-          </div>
-          <div class="update-item">
-            <h3>Random Tip System</h3>
-            <p>Dynamic tips that randomly cycle below the title with smooth fade transitions.</p>
-          </div>
-          <div class="update-item">
-            <h3>Infrared Turbo Proxy</h3>
-            <p>New default proxy option for faster and more reliable content access.</p>
-          </div>
-          <div class="update-item">
-            <h3>Version Updates</h3>
-            <p>Updated to Infrared v0.10 Turbo with Interstellar v6.1.4 and launcher IR v0.03 ignition.</p>
-          </div>
-          <div class="update-item">
-            <h3>Expanded Tips Collection</h3>
-            <p>20+ fun and helpful tips to discover while browsing.</p>
-          </div>
-        </div>
-      </div>
+  <div class="home">
+    <!-- Node: wallpaperBlur (ID: 84:32) -->
+    <div class="wallpaper-blur"></div>
+
+    <!-- Node: sidebar (ID: 89:49) -->
+    <div class="sidebar">
     </div>
 
-    <nav class="navbar">
-      <div class="nav-content">
-        <a href="/" class="nav-item">Home</a>
-        <a href="/a" class="nav-item">Games</a>
-        <a href="/b" class="nav-item">Apps</a>
-        <a href="/d" class="nav-item">Tabs</a>
-
-        <a href="/c" class="nav-item">Settings</a>
+    <!-- Node: web (ID: 84:18) -->
+    <div class="web">
+      <!-- Node: wallpaper (ID: 84:29) -->
+      <div class="wallpaper"></div>
+      
+      <nav class="navbar">
+        <div class="nav-content">
+          <a href="/" class="nav-item">Home</a>
+          <a href="/a" class="nav-item">Games</a>
+          <a href="/b" class="nav-item">Apps</a>
+          <a href="/d" class="nav-item">Tabs</a>
+          <a href="/c" class="nav-item">Settings</a>
+        </div>
+      </nav>
+      
+      <div class="main">
+        <h1 class="title">INFRARED</h1>
+        <p class="subtitle" id="dynamic-subtitle">Using Interstellar to push boundary's of luxury at school</p>
       </div>
-    </nav>
-    <div class="main">
-      <h1 class="title">INFRARED</h1>
-      <p class="subtitle" id="dynamic-subtitle">Using Interstellar to push boundary's of luxury at school</p>
-    </div>
-    <div class="blur-group">
-      <div class="ellipse e1"></div>
-      <div class="ellipse e2"></div>
-      <div class="ellipse e3"></div>
-      <div class="ellipse e4"></div>
-      <div class="ellipse e5"></div>
+      
+      <div class="blur-group">
+        <div class="ellipse e1"></div>
+        <div class="ellipse e2"></div>
+        <div class="ellipse e3"></div>
+        <div class="ellipse e4"></div>
+        <div class="ellipse e5"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // Auto-hide navigation bar
+    // Restore tip logic
     const navbar = document.querySelector('.navbar');
     let hideTimeout;
 
@@ -81,36 +63,21 @@
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => {
         navbar.classList.remove('visible');
-      }, 2000); // Hide after 2 seconds of no mouse movement
+      }, 2000);
     }
 
     function handleMouseMove(event) {
-      // Show navbar if mouse is within 60px of top of screen
       if (event.clientY <= 60) {
         showNavbar();
       }
     }
 
-    // Show navbar on mouse movement near top
     document.addEventListener('mousemove', handleMouseMove);
-
-    // Show navbar on scroll to top
-    window.addEventListener('scroll', () => {
-      if (window.scrollY === 0) {
-        showNavbar();
-      }
-    });
-
-    // Show navbar initially for a brief moment
-    setTimeout(() => {
-      showNavbar();
-    }, 500);
 
     let tips = [];
     let currentTipIndex = 0;
     let subtitleElement;
 
-    // Load tips and start cycling
     async function loadTips() {
       try {
         const response = await fetch('/tips.json');
@@ -118,15 +85,10 @@
         subtitleElement = document.getElementById('dynamic-subtitle');
 
         if (tips.length > 0) {
-          // Start at random tip
           currentTipIndex = Math.floor(Math.random() * tips.length);
-
-          // Display random starting tip with fade in
           subtitleElement.textContent = tips[currentTipIndex].content;
           subtitleElement.style.opacity = '1';
-
-          // Start cycling through tips every 7 seconds with smooth transitions
-          setTimeout(startTipCycle, 6500); // Start after 6.5 seconds (7 - 0.5 fade time)
+          setTimeout(startTipCycle, 6500);
         }
       } catch (error) {
         console.error('Failed to load tips:', error);
@@ -134,73 +96,21 @@
     }
 
     function startTipCycle() {
-      // Fade out current tip
       subtitleElement.style.opacity = '0';
-
-      // After fade out completes, change to random tip and fade back in
       setTimeout(() => {
         let newTipIndex;
         do {
           newTipIndex = Math.floor(Math.random() * tips.length);
-        } while (tips.length > 1 && newTipIndex === currentTipIndex); // Avoid showing same tip consecutively
+        } while (tips.length > 1 && newTipIndex === currentTipIndex);
 
         currentTipIndex = newTipIndex;
         subtitleElement.textContent = tips[currentTipIndex].content;
         subtitleElement.style.opacity = '1';
-
-        // Schedule next cycle
         setTimeout(startTipCycle, 6500);
-      }, 500); // Wait for fade out to complete (0.5s)
+      }, 500);
     }
 
-    // Load tips when page loads
     loadTips();
-
-    // What's New Modal Functionality
-    function checkWhatsNewCookie() {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'whatsNewShown') {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function setWhatsNewCookie() {
-      // Set cookie to expire in 30 days
-      const date = new Date();
-      date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
-      document.cookie = `whatsNewShown=true; expires=${date.toUTCString()}; path=/`;
-    }
-
-    function showWhatsNew() {
-      const modal = document.getElementById('whats-new-modal');
-      modal.style.display = 'block';
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-
-    function closeWhatsNew() {
-      const modal = document.getElementById('whats-new-modal');
-      modal.style.display = 'none';
-      document.body.style.overflow = 'auto'; // Restore scrolling
-      setWhatsNewCookie();
-    }
-
-    // Close modal when clicking outside
-    document.getElementById('whats-new-modal').addEventListener('click', function (event) {
-      if (event.target === this) {
-        closeWhatsNew();
-      }
-    });
-
-    // Check if we should show what's new on page load
-    window.addEventListener('load', function () {
-      if (!checkWhatsNewCookie()) {
-        setTimeout(showWhatsNew, 1000); // Show after 1 second for better UX
-      }
-    });
   </script>
 </body>
 

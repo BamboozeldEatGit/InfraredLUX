@@ -19,112 +19,88 @@
 </head>
 
 <body id="no">
-  <nav class="nav" id="right-side-nav">
-    <ul id="tab-list"></ul>
-    <button title="add-tab" id="add-tab">
-      <i class="fa-solid fa-plus"></i>
-    </button>
-  </nav>
-  <div id="nav-wrapper">
-    <div class="nav-bar">
-      <div class="nav-container">
-        <div class="nav-left">
-          <button title="Back to Infrared" onclick="window.location.href='index.html'" class="nav-button logo-button">
-            <img src="assets/media/favicon/favicon.png" alt="Infrared" class="logo-img">
-          </button>
-          <button title="Back Arrow" class="nav-button" onclick="goBack()">
+  <div class="wallpaper-blur"></div>
+  <aside class="sidebar" id="tabs-sidebar">
+    <nav class="nav" id="right-side-nav">
+      <div class="sidebar-controls browser-shell">
+        <div class="browser-top-row">
+          <button title="Back Arrow" class="nav-button browser-icon-btn" onclick="goBack()">
             <i class="fa-solid fa-arrow-left"></i>
           </button>
-          <button title="Forward Arrow" class="nav-button" onclick="goForward()">
+          <button title="Forward Arrow" class="nav-button browser-icon-btn" onclick="goForward()">
             <i class="fa-solid fa-arrow-right"></i>
           </button>
-          <button title="Reload" onclick="reload()" class="nav-button">
+          <button title="Reload" onclick="reload()" class="nav-button browser-icon-btn">
             <i class="fa-solid fa-rotate-right"></i>
           </button>
-          <form id="fv" class="navpost" method="POST">
-          </form>
+          <div class="browser-grow"></div>
+          <button title="Back to Infrared" onclick="window.location.href='index.html'" class="nav-button browser-badge-btn">
+            <img src="assets/media/favicon/favicon.png" alt="Infrared" class="logo-img">
+          </button>
         </div>
-        <input id="iv" class="bar" placeholder="Search or enter a new URL" type="text" />
-        <div class="nav-right">
-          <button title="Fullscreen" id="fullscreen-button" class="nav-button nav-btn-right" onclick="FS()">
-            <i class="fa-solid fa-expand"></i>
-          </button>
-          <button title="Inspect" class="nav-button nav-btn-right" onclick="eToggle()">
-            <i class="fa-solid fa-code"></i>
-          </button>
-          <button title="Tabs" id="tabs-button" class="nav-button nav-btn-right">
-            <i class="fa-solid fa-magnifying-glass-minus"></i>
-          </button>
+        <div class="browser-url-row">
+          <form id="fv" class="navpost browser-url-form" method="POST">
+            <input id="iv" class="bar side-bar browser-url-input" placeholder="http://localhost:8080/d" type="text" />
+          </form>
+          <div class="browser-url-actions">
+            <button title="Fullscreen" id="fullscreen-button" class="nav-button browser-icon-btn" onclick="FS()">
+              <i class="fa-solid fa-expand"></i>
+            </button>
+            <button title="Inspect" class="nav-button browser-icon-btn" onclick="eToggle()">
+              <i class="fa-solid fa-code"></i>
+            </button>
+            <button title="Tabs" id="tabs-button" class="nav-button browser-icon-btn">
+              <i class="fa-solid fa-magnifying-glass-minus"></i>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+      <div id="tabs-list-wrapper">
+        <ul id="tab-list"></ul>
+        <button title="add-tab" id="add-tab">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+    </nav>
+  </aside>
+  <div class="tabs-web">
+    <div class="frame-container" id="frame-container"></div>
   </div>
-  <div class="frame-container" id="frame-container"></div>
   <script src="assets/js/007.js?v=000"></script>
   <script src="./assets/mathematics/bundle.js?v=2025-04-15"></script>
   <script src="./assets/mathematics/config.js?v=2025-04-15"></script>
   <script src="/assets/js/001.js?v=001"></script>
 
   <script>
-    // Auto-hide navigation bar
-    const navbar = document.querySelector('.nav-bar');
-    const navWrapper = document.getElementById('nav-wrapper');
-    let hideTimeout;
+    const tabsSidebar = document.getElementById('tabs-sidebar');
+    document.body.classList.add('sidebar-collapsed');
+    if (tabsSidebar) {
+      let collapseTimer;
+      const openSidebar = () => {
+        clearTimeout(collapseTimer);
+        document.body.classList.remove('sidebar-collapsed');
+      };
+      const collapseSidebar = () => {
+        clearTimeout(collapseTimer);
+        collapseTimer = setTimeout(() => {
+          document.body.classList.add('sidebar-collapsed');
+        }, 140);
+      };
 
-    function showNavbar() {
-      navbar.classList.add('visible');
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        navbar.classList.remove('visible');
-      }, 2000); // Hide after 2 seconds of no mouse movement
+      tabsSidebar.addEventListener('mouseenter', () => {
+        openSidebar();
+      });
+      tabsSidebar.addEventListener('mouseleave', () => {
+        collapseSidebar();
+      });
+      document.addEventListener('mousemove', (event) => {
+        if (event.clientX <= 8) {
+          openSidebar();
+        } else if (event.clientX > 310 && !tabsSidebar.matches(':hover')) {
+          collapseSidebar();
+        }
+      });
     }
-
-    function hideNavbar() {
-      clearTimeout(hideTimeout);
-      navbar.classList.remove('visible');
-    }
-
-    function handleMouseMove(event) {
-      // Show navbar if mouse is within 60px of top of screen
-      if (event.clientY <= 60) {
-        showNavbar();
-      }
-    }
-
-    function handleClick(event) {
-      // If clicking on navbar, keep it visible and reset timer
-      if (navbar.contains(event.target)) {
-        showNavbar();
-      } else if (navbar.classList.contains('visible')) {
-        // If clicking outside navbar and it's visible, hide it
-        hideNavbar();
-      }
-    }
-
-    // Auto-hide nav-wrapper when mouse leaves
-    navWrapper.addEventListener('mouseleave', () => {
-      if (navbar.classList.contains('visible')) {
-        hideNavbar();
-      }
-    });
-
-    // Show navbar on mouse movement near top
-    document.addEventListener('mousemove', handleMouseMove);
-
-    // Handle clicks to show/hide navbar
-    document.addEventListener('click', handleClick);
-
-    // Show navbar on scroll to top
-    window.addEventListener('scroll', () => {
-      if (window.scrollY === 0) {
-        showNavbar();
-      }
-    });
-
-    // Show navbar initially for a brief moment
-    setTimeout(() => {
-      showNavbar();
-    }, 500);
   </script>
   <!-- End of body -->
 </body>
