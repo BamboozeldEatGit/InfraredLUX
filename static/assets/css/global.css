@@ -1,9 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap");
 
 :root {
    --background-color: #232323;
    --text-primary: #ffffff;
+   --font-ui: "Geist", sans-serif;
+   --font-mono: "Geist Mono", monospace;
 }
 
 @font-face {
@@ -14,7 +15,8 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-ui);
+    font-optical-sizing: auto;
     color: var(--text-primary);
     min-height: 100vh;
     background-image: url('/assets/media/homebg.png');
@@ -58,7 +60,7 @@ body::-webkit-scrollbar {
 }
 
 #dynamic-subtitle {
-   font-family: 'JetBrains Mono', monospace;
+   font-family: var(--font-mono);
    font-weight: 400;
    font-size: 1.1em;
    letter-spacing: 0.5px;

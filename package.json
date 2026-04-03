@@ -7,10 +7,7 @@
     "node": ">=18.18.0"
   },
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
     "start": "node index.js",
-    "start:next": "next start",
     "format": "biome format --write .",
     "precommit": "pnpm run format && biome check --write .",
     "lint": "biome lint --write ."
@@ -29,17 +26,12 @@
     "express": "^4.21.2",
     "express-basic-auth": "^1.2.1",
     "mime": "^4.0.7",
-    "next": "^15.2.4",
-    "node-fetch": "^3.3.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "motion": "^12.38.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
-    "@types/node": "^22.10.5",
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^22.10.5"
   },
   "packageManager": "pnpm@9.10.0"
 }

@@ -34,10 +34,10 @@ if (form && input) {
 function processUrl(value, path) {
   let url = value.trim();
   const engine = localStorage.getItem("engine");
-  const searchUrl = engine ? engine : "https://www.google.com/search?q=";
+  const searchUrl = engine ? engine : "https://duckduckgo.com/?q=";
 
   if (!isUrl(url)) {
-    url = searchUrl + url;
+    url = searchUrl + encodeURIComponent(url);
   } else if (!(url.startsWith("https://") || url.startsWith("http://"))) {
     url = `https://${url}`;
   }

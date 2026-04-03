@@ -2,7 +2,15 @@
     font-family: "Progesteron", sans-serif;
     font-size: 256px;
     font-weight: normal;
-    background: white;
+    background: linear-gradient(
+        100deg,
+        rgba(255, 255, 255, 0.84) 0%,
+        rgba(255, 255, 255, 0.96) 34%,
+        rgba(255, 255, 255, 1) 46%,
+        rgba(255, 255, 255, 0.88) 58%,
+        rgba(255, 255, 255, 0.95) 100%
+    );
+    background-size: 220% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -11,10 +19,11 @@
     max-width: 100%;
     text-align: center;
     z-index: 1;
+    animation: infrared-shimmer 8.5s linear infinite;
 }
 
 .subtitle {
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-ui);
     font-size: 32px;
     font-weight: 300;
     color: var(--text-primary);
@@ -40,4 +49,14 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10001;
+}
+
+@keyframes infrared-shimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
 }

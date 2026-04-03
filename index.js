@@ -14,8 +14,6 @@ import config from "./config.js";
 
 const __dirname = process.cwd();
 const PORT = Number(process.env.PORT || 8080);
-const dev = process.env.NODE_ENV !== "production";
-let nextHandler = null;
 
 const server = http.createServer();
 const app = express();
@@ -84,6 +82,7 @@ app.get("/e/*", async (req, res, nextMiddleware) => {
 });
 
 app.use(express.static(path.join(__dirname, "static"), { index: false }));
+app.use("/vendor/motion", express.static(path.join(__dirname, "node_modules", "motion", "dist")));
 app.use("/uv", express.static(ultravioletPath));
 app.use("/baremux", express.static(baremuxPath));
 
@@ -108,15 +107,6 @@ const registerStaticFallbackRoutes = () => {
   });
 };
 
-const registerNextCatchAllRoute = () => {
-  app.all("*", (req, res) => {
-    if (!nextHandler) {
-      return res.status(503).send("Next.js handler is not ready.");
-    }
-    return nextHandler(req, res);
-  });
-};
-
 server.on("request", (req, res) => {
   if (bareServer.shouldRoute(req)) {
     bareServer.routeRequest(req, res);
@@ -137,28 +127,9 @@ server.on("listening", () => {
   console.log(chalk.green(`Server is running on http://localhost:${PORT}`));
 });
 
-const start = async () => {
-  // In Vercel serverless runtime, loading Next internals through custom server
-  // can fail. Fall back to static routes instead of crashing the process.
-  if (!process.env.VERCEL) {
-    try {
-      const { default: next } = await import("next");
-      const nextApp = next({ dev, port: PORT });
-      await nextApp.prepare();
-      nextHandler = nextApp.getRequestHandler();
-      registerNextCatchAllRoute();
-    } catch (error) {
-      console.error("Failed to initialize Next.js, using static fallback:", error);
-      registerStaticFallbackRoutes();
-    }
-  } else {
-    registerStaticFallbackRoutes();
-  }
-
+const start = () => {
+  registerStaticFallbackRoutes();
   server.listen({ port: PORT });
 };
 
-start().catch(error => {
-  console.error("Failed to start server:", error);
-  process.exit(1);
-});
+start();

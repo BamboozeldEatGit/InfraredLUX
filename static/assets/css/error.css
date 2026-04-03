@@ -1,6 +1,6 @@
 .error {
    color: var(--text-primary);
-   font-family: "Inter", sans-serif;
+   font-family: var(--font-ui);
    font-weight: 900;
    top: 15%;
    text-align: center;

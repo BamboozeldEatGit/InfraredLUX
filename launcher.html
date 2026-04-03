@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap");
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            background: #0c0c0c;
+            color: #f2f2f2;
+            font-family: "Geist Mono", monospace;
+            overflow: hidden;
+        }
+
+        .window {
+            width: 100vw;
+            height: 100vh;
+            background: #0c0c0c;
+            overflow: hidden;
+        }
+
+        .screen {
+            height: 100vh;
+            padding: 18px 20px 24px;
+            background: #0c0c0c;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .history {
+            font-size: 20px;
+            line-height: 1;
+            white-space: pre-wrap;
+            word-break: normal;
+        }
+
+        .line {
+            min-height: 1em;
+        }
+
+        .line.error {
+            color: #ff5f56;
+        }
+
+        .prompt-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            margin-top: 0;
+            font-size: 20px;
+            line-height: 1;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .prompt-text {
+            white-space: pre-wrap;
+        }
+
+        .banner {
+            margin: 0;
+            padding: 0;
+            display: block;
+            color: #f2f2f2;
+            font: inherit;
+            font-size: clamp(12px, 2.2vw, 24px);
+            line-height: 1;
+            white-space: pre;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.15em;
+            margin-left: 2px;
+            background: #f2f2f2;
+            animation: blink 1s steps(1, end) infinite;
+            vertical-align: text-bottom;
+        }
+
+        .hidden-input {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .screen {
+                padding: 14px 16px 20px;
+            }
+
+            .history,
+            .prompt-line {
+                font-size: 16px;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+    <main class="window" aria-label="Infrared launcher terminal">
+        <section class="screen">
+            <div class="history" id="history" aria-live="polite">
+                <pre class="banner">  ___ _   _ _____ ____      _    ____  _____ ____  
+ |_ _| \ | |  ___|  _ \    / \  |  _ \| ____|  _ \ 
+  | ||  \| | |_  | |_) |  / _ \ | |_) |  _| | | | |
+  | || |\  |  _| |  _ &lt;  / ___ \|  _ &lt;| |___| |_| |
+ |___|_| \_|_|   |_| \_\/_/   \_\_| \_\_____|____/ </pre>
+                <div class="line"></div>
+                <div class="line">Press Y to launch Infrared</div>
+                <div class="line">Press N to close</div>
+                <div class="line"></div>
+            </div>
+            <div class="prompt-line">
+                <span>C:\Infrared&gt;</span>
+                <span class="prompt-text" id="prompt-text"></span>
+                <span class="cursor" id="cursor"></span>
+            </div>
+            <input
+                id="command-input"
+                class="hidden-input"
+                type="text"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                aria-label="Terminal input">
+        </section>
+    </main>
+
+    <script>
+        const history = document.getElementById("history");
+        const screen = document.querySelector(".screen");
+        const promptText = document.getElementById("prompt-text");
+        const cursor = document.getElementById("cursor");
+        const commandInput = document.getElementById("command-input");
+        const launchTarget = atob("aHR0cHM6Ly9wcmV2aWV3LnRlaXRpb24uY29t");
+        let isProcessing = false;
+
+        focusInput();
+        syncPrompt();
+
+        window.addEventListener("load", focusInput);
+        document.addEventListener("click", focusInput);
+        screen.addEventListener("click", focusInput);
+
+        commandInput.addEventListener("input", syncPrompt);
+        commandInput.addEventListener("blur", () => {
+            if (!isProcessing) {
+                window.setTimeout(focusInput, 0);
+            }
+        });
+
+        commandInput.addEventListener("keydown", (event) => {
+            if (isProcessing) {
+                event.preventDefault();
+                return;
+            }
+
+            const key = event.key;
+
+            if (key === "Enter") {
+                event.preventDefault();
+                executeCommand(commandInput.value);
+                return;
+            }
+
+            if (key === "Escape") {
+                event.preventDefault();
+                commandInput.value = "";
+                syncPrompt();
+                return;
+            }
+        });
+
+        function printLine(text = "", type = "") {
+            const line = document.createElement("div");
+            line.className = type ? `line ${type}` : "line";
+            line.textContent = text;
+            history.appendChild(line);
+            screen.scrollTop = screen.scrollHeight;
+        }
+
+        function focusInput() {
+            commandInput.focus({ preventScroll: true });
+        }
+
+        function syncPrompt() {
+            promptText.textContent = commandInput.value;
+            screen.scrollTop = screen.scrollHeight;
+        }
+
+        function executeCommand(rawValue) {
+            const command = rawValue.trim();
+
+            if (!command) {
+                printLine("C:\\Infrared>");
+                commandInput.value = "";
+                syncPrompt();
+                return;
+            }
+
+            isProcessing = true;
+            cursor.style.display = "none";
+            printLine(`C:\\Infrared>${command}`);
+            commandInput.value = "";
+            syncPrompt();
+
+            const normalized = command.toLowerCase();
+
+            if (normalized === "y" || normalized === "launch" || normalized === "launch infrared") {
+                printLine("Launching Infrared...");
+                launchInfrared();
+                return;
+            }
+
+            if (normalized === "n" || normalized === "close" || normalized === "exit") {
+                printLine("Closing launcher...");
+                closeLauncher();
+                return;
+            }
+
+            printLine(`ERROR: "${command}" is not a valid option. Press Y to launch or N to close.`, "error");
+            finishCommand();
+        }
+
+        function launchInfrared() {
+            const newWindow = window.open("about:blank", "_blank");
+
+            if (!newWindow) {
+                printLine("ERROR: Popup blocked. Allow popups, then press Y again.", "error");
+                finishCommand();
+                return;
+            }
+
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Gmail</title>
+                    <link rel="icon" type="image/png" href="https://ssl.gstatic.com/images/branding/product/1x/hh_gmail_96dp.png">
+                    <style>
+                        html, body {
+                            margin: 0;
+                            height: 100%;
+                            overflow: hidden;
+                            background: #000;
+                        }
+
+                        iframe {
+                            width: 100%;
+                            height: 100%;
+                            border: 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <iframe
+                        src="${launchTarget}"
+                        allowfullscreen
+                        sandbox="allow-same-origin allow-scripts allow-top-navigation allow-forms allow-pointer-lock allow-modals">
+                    </iframe>
+                    <script>
+                        window.addEventListener("beforeunload", (event) => {
+                            event.preventDefault();
+                            event.returnValue = "";
+                        });
+                    <\/script>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+
+            printLine("Session started.");
+            finishCommand();
+        }
+
+        function closeLauncher() {
+            window.setTimeout(() => {
+                window.open("", "_self");
+                window.close();
+
+                if (!window.closed) {
+                    printLine("ERROR: Browser blocked automatic close. Close this tab manually.", "error");
+                    finishCommand();
+                }
+            }, 120);
+        }
+
+        function finishCommand() {
+            isProcessing = false;
+            cursor.style.display = "inline-block";
+            focusInput();
+            syncPrompt();
+        }
+    </script>
+</body>
+
+</html>

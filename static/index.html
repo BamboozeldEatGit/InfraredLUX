@@ -19,26 +19,36 @@
     <!-- Node: wallpaperBlur (ID: 84:32) -->
     <div class="wallpaper-blur"></div>
 
-    <!-- Node: sidebar (ID: 89:49) -->
-    <div class="sidebar">
-    </div>
-
     <!-- Node: web (ID: 84:18) -->
     <div class="web">
       <!-- Node: wallpaper (ID: 84:29) -->
       <div class="wallpaper"></div>
-      
-      <nav class="navbar">
-        <div class="nav-content">
-          <a href="/" class="nav-item">Home</a>
-          <a href="/a" class="nav-item">Games</a>
-          <a href="/b" class="nav-item">Apps</a>
-          <a href="/d" class="nav-item">Tabs</a>
-          <a href="/c" class="nav-item">Settings</a>
-        </div>
-      </nav>
-      
+
       <div class="main">
+        <nav class="navbar home-hero-nav">
+          <div class="nav-content">
+            <a href="/" class="nav-item">
+              <i data-lucide="house"></i>
+              <span>Home</span>
+            </a>
+            <a href="/a" class="nav-item">
+              <i data-lucide="gamepad-2"></i>
+              <span>Games</span>
+            </a>
+            <a href="/b" class="nav-item">
+              <i data-lucide="grid-2x2"></i>
+              <span>Apps</span>
+            </a>
+            <a href="/d" class="nav-item">
+              <i data-lucide="panels-top-left"></i>
+              <span>Tabs</span>
+            </a>
+            <a href="/c" class="nav-item">
+              <i data-lucide="settings-2"></i>
+              <span>Settings</span>
+            </a>
+          </div>
+        </nav>
         <h1 class="title">INFRARED</h1>
         <p class="subtitle" id="dynamic-subtitle">Using Interstellar to push boundary's of luxury at school</p>
       </div>
@@ -53,27 +63,20 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
+  <script>
+    window.lucide?.createIcons({
+      attrs: {
+        width: 14,
+        height: 14,
+        strokeWidth: 2,
+      },
+    });
+  </script>
+  <script src="/vendor/motion/motion.js"></script>
+  <script src="/assets/js/home-motion.js"></script>
   <script>
     // Restore tip logic
-    const navbar = document.querySelector('.navbar');
-    let hideTimeout;
-
-    function showNavbar() {
-      navbar.classList.add('visible');
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        navbar.classList.remove('visible');
-      }, 2000);
-    }
-
-    function handleMouseMove(event) {
-      if (event.clientY <= 60) {
-        showNavbar();
-      }
-    }
-
-    document.addEventListener('mousemove', handleMouseMove);
-
     let tips = [];
     let currentTipIndex = 0;
     let subtitleElement;
@@ -87,7 +90,7 @@
         if (tips.length > 0) {
           currentTipIndex = Math.floor(Math.random() * tips.length);
           subtitleElement.textContent = tips[currentTipIndex].content;
-          subtitleElement.style.opacity = '1';
+          window.animateHomeTipReveal?.(true);
           setTimeout(startTipCycle, 6500);
         }
       } catch (error) {
@@ -96,8 +99,7 @@
     }
 
     function startTipCycle() {
-      subtitleElement.style.opacity = '0';
-      setTimeout(() => {
+      const showNextTip = () => {
         let newTipIndex;
         do {
           newTipIndex = Math.floor(Math.random() * tips.length);
@@ -105,9 +107,16 @@
 
         currentTipIndex = newTipIndex;
         subtitleElement.textContent = tips[currentTipIndex].content;
-        subtitleElement.style.opacity = '1';
+        window.animateHomeTipReveal?.();
         setTimeout(startTipCycle, 6500);
-      }, 500);
+      };
+
+      if (window.animateHomeTipExit) {
+        window.animateHomeTipExit(showNextTip);
+      } else {
+        subtitleElement.style.opacity = '0';
+        setTimeout(showNextTip, 500);
+      }
     }
 
     loadTips();

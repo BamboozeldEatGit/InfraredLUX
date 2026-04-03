@@ -56,16 +56,18 @@
         </div>
       </div>
       <div id="tabs-list-wrapper">
-        <ul id="tab-list"></ul>
-        <button title="add-tab" id="add-tab">
-          <i class="fa-solid fa-plus"></i>
+        <button title="add-tab" id="add-tab" type="button" aria-label="Create new tab">
+          <span class="add-tab-icon" aria-hidden="true">+</span>
+          <span class="add-tab-label">New Tab</span>
         </button>
+        <ul id="tab-list"></ul>
       </div>
     </nav>
   </aside>
   <div class="tabs-web">
     <div class="frame-container" id="frame-container"></div>
   </div>
+  <script src="/vendor/motion/motion.js"></script>
   <script src="assets/js/007.js?v=000"></script>
   <script src="./assets/mathematics/bundle.js?v=2025-04-15"></script>
   <script src="./assets/mathematics/config.js?v=2025-04-15"></script>

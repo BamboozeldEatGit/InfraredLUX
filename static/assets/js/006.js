@@ -347,6 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const dropdown = document.getElementById("engine");
   if (selectedEngineName) {
     dropdown.value = selectedEngineName;
+  } else {
+    dropdown.value = "DuckDuckGo";
   }
 });
 

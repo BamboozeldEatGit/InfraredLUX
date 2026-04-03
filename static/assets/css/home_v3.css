@@ -5,7 +5,7 @@ body, html {
     height: 100%;
     overflow: hidden;
     background-color: rgba(36, 36, 36, 1.00);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-ui);
     background-image: none !important; /* Remove global background */
 }
 
@@ -15,7 +15,7 @@ body, html {
     height: 100%;
     background-color: rgba(36, 36, 36, 1.00);
     overflow: hidden;
-    display: flex;
+    display: block;
     box-sizing: border-box;
 }
 
@@ -31,14 +31,6 @@ body, html {
     filter: blur(600px);
     z-index: 1;
     transform: scale(1.1); /* Prevent blur edges from showing */
-}
-
-.sidebar {
-    position: relative;
-    width: 310px;
-    height: 100%;
-    flex-shrink: 0;
-    z-index: 10;
 }
 
 .urlbox {
@@ -101,13 +93,11 @@ body, html {
 
 .web {
     position: relative;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    margin-right: 10px;
-    flex-grow: 1;
-    height: calc(100% - 20px);
+    margin: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(30, 30, 30, 1.00);
-    border-radius: 5px;
+    border-radius: 0;
     z-index: 5;
     overflow: hidden;
 }
@@ -120,10 +110,11 @@ body, html {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     box-sizing: border-box;
     position: relative;
     z-index: 2;
-    padding: 20px;
+    padding: 40px 20px 20px;
 }
 
 /* Responsive title */
@@ -137,10 +128,86 @@ body, html {
 }
 
 .web .navbar {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    transform: none;
+    z-index: 3;
+    margin-bottom: 12px;
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.web .nav-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px;
+    border-radius: 18px;
+    background: rgba(19, 21, 29, 0.52);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(24px) saturate(135%);
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+}
+
+.web .nav-item {
+    min-height: 36px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+}
+
+.web .nav-item svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+.web .nav-item span {
+    line-height: 1;
+}
+
+.web .nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: transparent;
+}
+
+.web .nav-item:first-child {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: transparent;
+}
+
+@media (max-width: 760px) {
+    .web .main {
+        justify-content: center;
+        gap: 10px;
+        padding-top: 28px;
+    }
+
+    .web .nav-content {
+        gap: 6px;
+        padding: 8px;
+        border-radius: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: min(92vw, 560px);
+    }
+
+    .web .nav-item {
+        min-height: 34px;
+        padding: 0 12px;
+    }
 }
 
 .web .blur-group {

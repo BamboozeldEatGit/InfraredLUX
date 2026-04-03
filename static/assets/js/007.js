@@ -16,6 +16,11 @@ window.addEventListener("load", () => {
 
   const form = document.getElementById("fv");
   const input = document.getElementById("iv");
+  function buildSearchUrl(query) {
+    const searchBase = localStorage.getItem("engine") || "https://duckduckgo.com/?q=";
+    return `${searchBase}${encodeURIComponent(query)}`;
+  }
+
   if (input) {
     // Handle Enter key press on the input field
     input.addEventListener("keydown", async event => {
@@ -24,7 +29,7 @@ window.addEventListener("load", () => {
         const formValue = input.value.trim();
         const url = isUrl(formValue)
           ? prependHttps(formValue)
-          : `https://www.google.com/search?q=${formValue}`;
+          : buildSearchUrl(formValue);
         processUrl(url);
       }
     });
@@ -36,7 +41,7 @@ window.addEventListener("load", () => {
         const formValue = input.value.trim();
         const url = isUrl(formValue)
           ? prependHttps(formValue)
-          : `https://www.google.com/search?q=${formValue}`;
+          : buildSearchUrl(formValue);
         processUrl(url);
       });
     }
@@ -82,7 +87,87 @@ document.addEventListener("DOMContentLoaded", event => {
   const addTabButton = document.getElementById("add-tab");
   const tabList = document.getElementById("tab-list");
   const iframeContainer = document.getElementById("frame-container");
+  const urlInput = document.getElementById("iv");
   let tabCounter = 1;
+
+  function animateNewTabEntry(tabElement) {
+    const motion = window.Motion;
+
+    if (!motion?.animate || !tabElement) {
+      return;
+    }
+
+    motion.animate(
+      tabElement,
+      {
+        opacity: [0, 1],
+        y: [10, 0],
+        scale: [0.97, 1],
+        filter: ["blur(8px)", "blur(0px)"],
+      },
+      {
+        duration: 0.32,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    );
+  }
+
+  function focusUrlBar() {
+    if (!urlInput) {
+      return;
+    }
+
+    urlInput.value = "";
+    window.requestAnimationFrame(() => {
+      urlInput.focus({ preventScroll: true });
+      urlInput.select();
+    });
+  }
+
+  function setFallbackIcon(tabFallback, label) {
+    const cleanLabel = (label || "Tab").replace(/[^a-z0-9]/gi, "").toUpperCase();
+    tabFallback.textContent = cleanLabel.slice(0, 2) || "T";
+  }
+
+  function updateTabMetadata(iframe, tabTitle, tabFavicon, tabFallback) {
+    let resolvedTitle = "Tab";
+
+    try {
+      const title = iframe.contentDocument?.title?.trim();
+      if (title && title.length > 1) {
+        if (title.length <= 100) {
+          resolvedTitle = title;
+        } else {
+          const currentUrl = iframe.contentWindow.location.href;
+          try {
+            const url = new URL(currentUrl);
+            resolvedTitle = url.hostname;
+          } catch (error) {
+            resolvedTitle = "Tab";
+          }
+        }
+      }
+
+      const faviconLink = iframe.contentDocument?.querySelector(
+        "link[rel~='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']",
+      );
+
+      if (faviconLink?.href) {
+        tabFavicon.src = faviconLink.href;
+        tabFavicon.hidden = false;
+        tabFallback.hidden = true;
+      } else {
+        tabFavicon.hidden = true;
+        tabFallback.hidden = false;
+      }
+    } catch (error) {
+      tabFavicon.hidden = true;
+      tabFallback.hidden = false;
+    }
+
+    tabTitle.textContent = resolvedTitle;
+    setFallbackIcon(tabFallback, resolvedTitle);
+  }
 
   const pendingGoUrl = localStorage.getItem("InfraredPendingGoUrl");
   const pendingRawUrl = localStorage.getItem("InfraredPendingRawUrl");
@@ -96,18 +181,30 @@ document.addEventListener("DOMContentLoaded", event => {
   }
 
   addTabButton.addEventListener("click", () => {
-    createNewTab();
+    createNewTab(true);
     Load();
+    focusUrlBar();
   });
-  function createNewTab() {
+  function createNewTab(shouldAnimate = false) {
     const newTab = document.createElement("li");
+    const tabEntry = document.createElement("div");
+    const tabIconWrap = document.createElement("span");
+    const tabFavicon = document.createElement("img");
+    const tabFallback = document.createElement("span");
     const tabTitle = document.createElement("span");
     const newIframe = document.createElement("iframe");
     newIframe.sandbox =
       "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-modals allow-orientation-lock allow-presentation allow-storage-access-by-user-activation";
     // When Top Navigation is not allowed links with the "top" value will be entirely blocked, if we allow Top Navigation it will overwrite the tab, which is obviously not wanted.
     tabTitle.textContent = `New Tab ${tabCounter}`;
-    tabTitle.className = "t";
+    tabTitle.className = "tab-title";
+    tabEntry.className = "tab-entry";
+    tabIconWrap.className = "tab-icon-wrap";
+    tabFavicon.className = "tab-favicon";
+    tabFavicon.alt = "";
+    tabFavicon.hidden = true;
+    tabFallback.className = "tab-fallback-icon";
+    setFallbackIcon(tabFallback, tabTitle.textContent);
     newTab.dataset.tabId = tabCounter;
     newTab.addEventListener("click", switchTab);
     newTab.setAttribute("draggable", true);
@@ -115,9 +212,16 @@ document.addEventListener("DOMContentLoaded", event => {
     closeButton.classList.add("close-tab");
     closeButton.innerHTML = "&#10005;";
     closeButton.addEventListener("click", closeTab);
-    newTab.appendChild(tabTitle);
+    tabIconWrap.appendChild(tabFavicon);
+    tabIconWrap.appendChild(tabFallback);
+    tabEntry.appendChild(tabIconWrap);
+    tabEntry.appendChild(tabTitle);
+    newTab.appendChild(tabEntry);
     newTab.appendChild(closeButton);
     tabList.appendChild(newTab);
+    if (shouldAnimate) {
+      animateNewTabEntry(newTab);
+    }
     const allTabs = Array.from(tabList.querySelectorAll("li"));
     for (const tab of allTabs) {
       tab.classList.remove("active");
@@ -130,22 +234,7 @@ document.addEventListener("DOMContentLoaded", event => {
     newIframe.dataset.tabId = tabCounter;
     newIframe.classList.add("active");
     newIframe.addEventListener("load", () => {
-      const title = newIframe.contentDocument.title;
-      if (title.length <= 1) {
-        tabTitle.textContent = "Tab";
-      } else if (title.length <= 100) {
-        tabTitle.textContent = title;
-      } else {
-        // Show only the domain part of the URL
-        const currentUrl = newIframe.contentWindow.location.href;
-        try {
-          const url = new URL(currentUrl);
-          tabTitle.textContent = url.hostname;
-        } catch (e) {
-          // Fallback if URL parsing fails
-          tabTitle.textContent = "Tab";
-        }
-      }
+      updateTabMetadata(newIframe, tabTitle, tabFavicon, tabFallback);
       newIframe.contentWindow.open = url => {
         if (typeof __uv$config !== 'undefined') {
           sessionStorage.setItem("URL", `/a/${__uv$config.encodeUrl(url)}`);
@@ -265,8 +354,8 @@ document.addEventListener("DOMContentLoaded", event => {
   });
   tabList.addEventListener("dragover", event => {
     event.preventDefault();
-    const targetTab = event.target;
-    if (targetTab.tagName === "LI" && targetTab !== dragTab) {
+    const targetTab = event.target.closest("li");
+    if (targetTab && targetTab !== dragTab) {
       const targetIndex = Array.from(tabList.children).indexOf(targetTab);
       const dragIndex = Array.from(tabList.children).indexOf(dragTab);
       if (targetIndex < dragIndex) {
