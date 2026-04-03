@@ -1,13 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
   const motion = window.Motion;
   const subtitle = document.getElementById("dynamic-subtitle");
+  const title = document.querySelector(".main > .title");
 
   if (!motion?.animate || !motion?.stagger) {
     return;
   }
 
   const navItems = Array.from(document.querySelectorAll(".nav-item"));
-  const heroItems = Array.from(document.querySelectorAll(".main > .title, .main > .subtitle"));
+  const heroItems = Array.from(document.querySelectorAll(".main > .subtitle"));
+  let titleChars = [];
+
+  if (title) {
+    const titleText = title.textContent ?? "";
+
+    title.setAttribute("aria-label", titleText);
+    title.innerHTML = "";
+
+    titleChars = Array.from(titleText).map(character => {
+      const span = document.createElement("span");
+      span.className = "title-char";
+      span.setAttribute("aria-hidden", "true");
+      span.textContent = character === " " ? "\u00A0" : character;
+      title.appendChild(span);
+      return span;
+    });
+  }
 
   if (navItems.length) {
     motion.animate(
@@ -25,6 +43,22 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  if (titleChars.length) {
+    motion.animate(
+      titleChars,
+      {
+        opacity: [0, 1],
+        y: [28, 0],
+        filter: ["blur(12px)", "blur(0px)"],
+      },
+      {
+        delay: motion.stagger(0.06, { startDelay: 0.18 }),
+        duration: 0.54,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    );
+  }
+
   if (heroItems.length) {
     motion.animate(
       heroItems,
@@ -34,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         filter: ["blur(12px)", "blur(0px)"],
       },
       {
-        delay: motion.stagger(0.1, { startDelay: 0.16 }),
+        delay: motion.stagger(0.1, { startDelay: titleChars.length ? 0.62 : 0.16 }),
         duration: 0.62,
         ease: [0.22, 1, 0.36, 1],
       },

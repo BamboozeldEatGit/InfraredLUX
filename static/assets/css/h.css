@@ -2,6 +2,10 @@
     font-family: "Progesteron", sans-serif;
     font-size: 256px;
     font-weight: normal;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0;
     background: linear-gradient(
         100deg,
         rgba(255, 255, 255, 0.84) 0%,
@@ -20,6 +24,17 @@
     text-align: center;
     z-index: 1;
     animation: infrared-shimmer 8.5s linear infinite;
+}
+
+.title-char {
+    display: inline-block;
+    opacity: 0;
+    background: inherit;
+    background-size: inherit;
+    background-position: inherit;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .subtitle {
