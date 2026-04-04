@@ -129,7 +129,10 @@ server.on("listening", () => {
 
 const start = () => {
   registerStaticFallbackRoutes();
-  server.listen({ port: PORT });
+  // Add '0.0.0.0' here to allow external connections
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(chalk.green(`Server is running on port ${PORT}`));
+  });
 };
 
 start();
