@@ -35,6 +35,10 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(express.static(path.join(__dirname, "static"), { index: false }));
+app.use("/vendor/motion", express.static(path.join(__dirname, "node_modules", "motion", "dist")));
+app.use("/uv", express.static(ultravioletPath));
+app.use("/baremux", express.static(baremuxPath));
 
 app.get("/e/*", async (req, res, nextMiddleware) => {
   try {
@@ -81,10 +85,6 @@ app.get("/e/*", async (req, res, nextMiddleware) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, "static"), { index: false }));
-app.use("/vendor/motion", express.static(path.join(__dirname, "node_modules", "motion", "dist")));
-app.use("/uv", express.static(ultravioletPath));
-app.use("/baremux", express.static(baremuxPath));
 
 const staticRoutes = [
   { path: "/b", file: "apps.html" },
