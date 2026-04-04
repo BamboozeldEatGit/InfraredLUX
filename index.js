@@ -88,6 +88,7 @@ app.get("/e/*", async (req, res, nextMiddleware) => {
 
 const staticRoutes = [
   { path: "/b", file: "apps.html" },
+  { path: "/a", file: "games.html" },
   { path: "/play.html", file: "games.html" },
   { path: "/c", file: "settings.html" },
   { path: "/d", file: "tabs.html" },
@@ -110,7 +111,7 @@ server.on("request", (req, res) => {
   if (bareServer.shouldRoute(req)) {
     bareServer.routeRequest(req, res);
   } else {
-    app(req, res); // Only give it to Express if it's NOT a proxy request
+    app(req, res);
   }
 });
 
