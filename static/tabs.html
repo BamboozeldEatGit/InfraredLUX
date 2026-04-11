@@ -34,7 +34,8 @@
             <i class="fa-solid fa-rotate-right"></i>
           </button>
           <div class="browser-grow"></div>
-          <button title="Back to Infrared" onclick="window.location.href='index.html'" class="nav-button browser-badge-btn">
+          <button title="Back to Infrared" onclick="window.location.href='index.html'"
+            class="nav-button browser-badge-btn">
             <img src="assets/media/favicon/favicon.png" alt="Infrared" class="logo-img">
           </button>
         </div>
@@ -93,9 +94,19 @@
         openSidebar();
       });
       tabsSidebar.addEventListener('mouseleave', () => {
+        // Don't collapse sidebar if command box is open
+        const commandBoxOverlay = document.getElementById('command-box-overlay');
+        if (commandBoxOverlay && commandBoxOverlay.classList.contains('active')) {
+          return;
+        }
         collapseSidebar();
       });
       document.addEventListener('mousemove', (event) => {
+        // Don't collapse sidebar if command box is open
+        const commandBoxOverlay = document.getElementById('command-box-overlay');
+        if (commandBoxOverlay && commandBoxOverlay.classList.contains('active')) {
+          return;
+        }
         if (event.clientX <= 8) {
           openSidebar();
         } else if (event.clientX > 310 && !tabsSidebar.matches(':hover')) {
@@ -103,7 +114,41 @@
         }
       });
     }
+
+    // Global Ctrl+K handler that works even when iframe is focused
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        const overlay = document.getElementById("command-box-overlay");
+        const input = document.getElementById("command-box-input");
+        if (overlay && input) {
+          overlay.classList.add("active");
+          input.focus();
+          input.value = "";
+        }
+      }
+    }, true); // Use capture phase to intercept before iframe gets it
   </script>
+
+  <!-- Animated Command Box -->
+  <div id="command-box-overlay" class="command-box-overlay">
+    <div class="command-box-wrapper">
+      <div class="command-box">
+        <div class="command-box-search">
+          <svg class="command-box-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="command-box-input" class="command-box-input" placeholder="Search..."
+            autocomplete="off" />
+        </div>
+        <div id="command-box-suggestions" class="command-box-suggestions">
+          <!-- Suggestions will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- End of body -->
 </body>
 

@@ -1,4 +1,31 @@
 // t.js
+
+// Cookie management helpers (top-level so they're available everywhere)
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    cookie = cookie.trim();
+    if (cookie.startsWith(nameEQ)) {
+      return decodeURIComponent(cookie.substring(nameEQ.length));
+    }
+  }
+  return null;
+}
+
+function setCookie(name, value, days = 30) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+}
+
+function trackSearch(url) {
+  const history = JSON.parse(getCookie("searchHistory") || "{}");
+  history[url] = (history[url] || 0) + 1;
+  setCookie("searchHistory", JSON.stringify(history));
+}
+
 window.addEventListener("load", () => {
   // Wait for config to be available before registering service worker
   const waitForConfig = setInterval(() => {
@@ -52,6 +79,13 @@ window.addEventListener("load", () => {
       return;
     }
     try {
+      // Track the search/visit
+      const isUrl = /^http(s?):\/\//.test(url);
+      if (isUrl) {
+        const domain = url.replace(/https?:\/\//i, "").split("/")[0];
+        trackSearch(domain);
+      }
+      
       const encodedUrl = __uv$config.encodeUrl(url);
       sessionStorage.setItem("GoUrl", encodedUrl);
       const iframeContainer = document.getElementById("frame-container");
@@ -242,6 +276,26 @@ document.addEventListener("DOMContentLoaded", event => {
         createNewTab();
         return null;
       };
+      
+      // Inject script to listen for Ctrl+K inside iframe
+      try {
+        const iframeDoc = newIframe.contentDocument || newIframe.contentWindow.document;
+        if (iframeDoc) {
+          const script = iframeDoc.createElement("script");
+          script.textContent = `
+            document.addEventListener("keydown", (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+                e.preventDefault();
+                window.parent.postMessage({ type: "openCommandBox" }, "*");
+              }
+            }, true);
+          `;
+          iframeDoc.head.appendChild(script);
+        }
+      } catch (error) {
+        // Silently fail for cross-origin iframes
+      }
+      
       if (newIframe.contentDocument.documentElement.outerHTML.trim().length > 0) {
         Load();
       }
@@ -369,6 +423,152 @@ document.addEventListener("DOMContentLoaded", event => {
     dragTab = null;
   });
   createNewTab();
+
+  // Check if command box should auto-open from Ctrl+K outside tabs
+  const shouldOpenCommandBox = sessionStorage.getItem("openCommandBox");
+  if (shouldOpenCommandBox) {
+    sessionStorage.removeItem("openCommandBox");
+  }
+
+  // Command Box Functionality
+  const commandBoxOverlay = document.getElementById("command-box-overlay");
+  const commandBoxInput = document.getElementById("command-box-input");
+  const commandBoxSuggestions = document.getElementById("command-box-suggestions");
+  let currentSuggestionIndex = -1;
+  let suggestions = [];
+
+  function filterSuggestions(query) {
+    if (!query.trim()) {
+      suggestions = getSortedSuggestions();
+    } else {
+      const allSuggestions = getSortedSuggestions();
+      const lowerQuery = query.toLowerCase();
+      suggestions = allSuggestions.filter(s =>
+        s.title.toLowerCase().includes(lowerQuery) ||
+        s.url.toLowerCase().includes(lowerQuery)
+      );
+    }
+    renderSuggestions();
+  }
+
+  function navigateToSuggestion(suggestion) {
+    trackSearch(suggestion.url);
+    commandBoxInput.value = suggestion.url;
+    const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+    commandBoxInput.dispatchEvent(enterEvent);
+    closeCommandBox();
+  }
+
+  function openCommandBox() {
+    if (!commandBoxOverlay) return;
+    commandBoxOverlay.classList.add("active");
+    commandBoxInput.value = urlInput ? urlInput.value || "" : "";
+    commandBoxInput.focus();
+    commandBoxInput.select();
+    filterSuggestions("");
+  }
+
+  function closeCommandBox() {
+    if (!commandBoxOverlay) return;
+    commandBoxOverlay.classList.remove("active");
+    commandBoxInput.value = "";
+    commandBoxSuggestions.innerHTML = "";
+  }
+
+  // Auto-open command box if coming from Ctrl+K outside tabs
+  if (shouldOpenCommandBox) {
+    setTimeout(() => {
+      openCommandBox();
+    }, 100);
+  }
+
+  // Click on URL bar opens command box
+  if (urlInput) {
+    urlInput.addEventListener("click", openCommandBox);
+  }
+
+  // Click outside command box closes it
+  if (commandBoxOverlay) {
+    commandBoxOverlay.addEventListener("click", (e) => {
+      if (e.target === commandBoxOverlay) {
+        closeCommandBox();
+      }
+    });
+  }
+
+  // Input handling
+  if (commandBoxInput) {
+    commandBoxInput.addEventListener("input", (e) => {
+      filterSuggestions(e.target.value);
+    });
+
+    commandBoxInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeCommandBox();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const value = commandBoxInput.value.trim();
+        if (value && urlInput) {
+          urlInput.value = value;
+          const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+          urlInput.dispatchEvent(enterEvent);
+        }
+        closeCommandBox();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+        updateSuggestionHighlight();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+        updateSuggestionHighlight();
+      }
+    });
+  }
+
+  function updateSuggestionHighlight() {
+    const items = commandBoxSuggestions.querySelectorAll(".command-box-suggestion");
+    items.forEach((item, index) => {
+      if (index === currentSuggestionIndex) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
+      }
+    });
+  }
+
+  // Add new tab opens command box
+  if (addTabButton) {
+    addTabButton.addEventListener("click", () => {
+      setTimeout(() => {
+        openCommandBox();
+      }, 100);
+    });
+  }
+
+  // Global Ctrl+K handler (with capture phase to work even when iframe is focused)
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      openCommandBox();
+    }
+  }, true);
+
+  // Global Escape handler to close command box even when iframe is focused
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && commandBoxOverlay && commandBoxOverlay.classList.contains("active")) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeCommandBox();
+    }
+  }, true); // Use capture phase
+
+  // Listen for postMessage from iframes (for Ctrl+K inside iframes)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "openCommandBox") {
+      openCommandBox();
+    }
+  });
 });
 
 // Reload

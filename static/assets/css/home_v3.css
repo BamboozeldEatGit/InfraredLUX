@@ -160,6 +160,7 @@ body, html {
     border-radius: 10px;
     border: none;
     background: transparent;
+    opacity: 0;
 }
 
 .web .nav-item svg {

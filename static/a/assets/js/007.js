@@ -512,6 +512,65 @@ document.addEventListener("DOMContentLoaded", () => {
       tb.querySelector("i").classList.add("fa-magnifying-glass-plus");
     }
   });
+
+  // Command Box Functionality
+  const commandBoxOverlay = document.getElementById("command-box-overlay");
+  const commandBoxInput = document.getElementById("command-box-input");
+  const urlInput = document.getElementById("iv");
+
+  function openCommandBox() {
+    if (!commandBoxOverlay) return;
+    commandBoxOverlay.classList.add("active");
+    commandBoxInput.value = urlInput.value || "";
+    commandBoxInput.focus();
+    commandBoxInput.select();
+  }
+
+  function closeCommandBox() {
+    if (!commandBoxOverlay) return;
+    commandBoxOverlay.classList.remove("active");
+    commandBoxInput.value = "";
+  }
+
+  if (urlInput) {
+    urlInput.addEventListener("click", openCommandBox);
+  }
+
+  if (commandBoxOverlay) {
+    commandBoxOverlay.addEventListener("click", (e) => {
+      if (e.target === commandBoxOverlay) {
+        closeCommandBox();
+      }
+    });
+  }
+
+  if (commandBoxInput) {
+    commandBoxInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeCommandBox();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const value = commandBoxInput.value.trim();
+        if (value) {
+          urlInput.value = value;
+          // Trigger the same logic as the URL input
+          const event = new KeyboardEvent("keydown", { key: "Enter" });
+          urlInput.dispatchEvent(event);
+        }
+        closeCommandBox();
+      }
+    });
+  }
+
+  // Open command box when adding a new tab
+  const addTabButton = document.getElementById("add-tab");
+  if (addTabButton) {
+    addTabButton.addEventListener("click", () => {
+      setTimeout(() => {
+        openCommandBox();
+      }, 100);
+    });
+  }
 });
 if (navigator.userAgent.includes("Chrome") && navigator.keyboard && navigator.keyboard.lock) {
   window.addEventListener("resize", () => {

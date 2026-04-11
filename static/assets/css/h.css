@@ -24,6 +24,11 @@
     text-align: center;
     z-index: 1;
     animation: infrared-shimmer 8.5s linear infinite;
+    min-height: 283px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .title-char {
@@ -45,6 +50,11 @@
     max-width: 833px;
     margin: 0 auto;
     text-align: center;
+    opacity: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .blur-group {

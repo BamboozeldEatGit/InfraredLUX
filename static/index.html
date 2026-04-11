@@ -114,6 +114,164 @@
 
     loadTips();
   </script>
+
+  <!-- Global Command Box for all pages -->
+  <div id="global-command-box-overlay" class="command-box-overlay">
+    <div class="command-box-wrapper">
+      <div class="command-box">
+        <div class="command-box-search">
+          <svg class="command-box-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="global-command-box-input" class="command-box-input"
+            placeholder="Search or enter URL..." autocomplete="off" />
+        </div>
+        <div id="global-command-box-suggestions" class="command-box-suggestions">
+          <!-- Suggestions will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Cookie management helpers (top-level so they're available everywhere)
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(nameEQ)) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+      }
+      return null;
+    }
+
+    function setCookie(name, value, days = 30) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+    }
+
+    function trackSearch(url) {
+      const history = JSON.parse(getCookie("searchHistory") || "{}");
+      history[url] = (history[url] || 0) + 1;
+      setCookie("searchHistory", JSON.stringify(history));
+    }
+
+    // Global Command Box Handler (for home screen and all pages)
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        // If on tabs page, open locally; otherwise navigate to tabs
+        const isOnTabs = window.location.pathname === "/d";
+        if (isOnTabs) {
+          const overlay = document.getElementById("command-box-overlay");
+          const input = document.getElementById("command-box-input");
+          if (overlay && input) {
+            overlay.classList.add("active");
+            input.focus();
+            input.value = "";
+          }
+        } else {
+          // Navigate to tabs page and flag to open command box
+          sessionStorage.setItem("openCommandBox", "true");
+          window.location.href = "/d";
+        }
+      }
+    }, true);
+
+    // Close with Escape on global overlay (non-tabs pages)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        document.getElementById("global-command-box-overlay")?.classList.remove("active");
+      }
+    });
+
+    const defaultSuggestions = [
+      { title: "YouTube", url: "youtube.com", icon: "🎥" },
+      { title: "Home / X", url: "x.com/home", icon: "𝕏" },
+      { title: "Google", url: "google.com", icon: "G" },
+      { title: "GitHub", url: "github.com", icon: "⚙" },
+      { title: "Stack Overflow", url: "stackoverflow.com", icon: "SO" }
+    ];
+
+    function getSortedSuggestions() {
+      const history = JSON.parse(getCookie("searchHistory") || "{}");
+      const suggestions = [...defaultSuggestions];
+
+      // Update frequency in suggestions
+      suggestions.forEach(s => {
+        s.frequency = history[s.url] || 0;
+      });
+
+      // Sort by frequency (descending)
+      return suggestions.sort((a, b) => b.frequency - a.frequency);
+    }
+
+    function filterGlobalSuggestions(query) {
+      const suggestionsContainer = document.getElementById("global-command-box-suggestions");
+      if (!suggestionsContainer) return;
+
+      const allSuggestions = getSortedSuggestions();
+      let filtered = allSuggestions;
+      if (query.trim()) {
+        const lower = query.toLowerCase();
+        filtered = allSuggestions.filter(s =>
+          s.title.toLowerCase().includes(lower) || s.url.toLowerCase().includes(lower)
+        );
+      }
+
+      suggestionsContainer.innerHTML = "";
+      filtered.forEach(suggestion => {
+        const div = document.createElement("div");
+        div.className = "command-box-suggestion";
+        div.innerHTML = `
+          <div class="suggestion-icon">${suggestion.icon || "📍"}</div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">${suggestion.title}</div>
+            <div class="suggestion-url">${suggestion.url}</div>
+          </div>
+        `;
+        div.addEventListener("click", () => {
+          trackSearch(suggestion.url);
+          window.location.href = `https://${suggestion.url}`;
+        });
+        suggestionsContainer.appendChild(div);
+      });
+    }
+
+    const globalInput = document.getElementById("global-command-box-input");
+    if (globalInput) {
+      globalInput.addEventListener("input", (e) => {
+        filterGlobalSuggestions(e.target.value);
+      });
+
+      globalInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const value = globalInput.value.trim();
+          if (value) {
+            const isUrl = /^http(s?):\/\//.test(value) || (value.includes(".") && !value.includes(" "));
+            const url = isUrl ? (value.startsWith("http") ? value : `https://${value}`) : `https://duckduckgo.com/?q=${encodeURIComponent(value)}`;
+            // Track the search
+            if (isUrl) {
+              const domain = value.includes(".") ? value.replace(/https?:\/\//i, "").split("/")[0] : value;
+              trackSearch(domain);
+            }
+            window.location.href = url;
+          }
+        }
+      });
+    }
+
+    document.getElementById("global-command-box-overlay")?.addEventListener("click", (e) => {
+      if (e.target.id === "global-command-box-overlay") {
+        e.target.classList.remove("active");
+      }
+    });
+  </script>
 </body>
 
 </html>

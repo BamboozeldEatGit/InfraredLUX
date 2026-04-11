@@ -194,6 +194,10 @@ body.settings-body * {
    width: 100%;
 }
 
+[hidden] {
+   display: none !important;
+}
+
 .settings-panel-header {
    margin-bottom: 14px;
 }
