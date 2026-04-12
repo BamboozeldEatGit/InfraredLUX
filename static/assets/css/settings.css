@@ -403,29 +403,44 @@ body.settings-body * {
 /* Keyboard Shortcuts Styles */
 .keyboard-panel-container {
    display: grid;
-   grid-template-columns: 1fr 240px;
-   gap: 20px;
+   grid-template-columns: 2fr 180px;
+   gap: 16px;
+}
+
+@media (min-width: 1600px) {
+   .keyboard-panel-container {
+      grid-template-columns: 3fr 160px;
+      gap: 12px;
+   }
 }
 
 .keyboard-main {
    background: #1a1a1a;
    border: 1px solid #262626;
    border-radius: 10px;
-   padding: 20px;
+   padding: 16px;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   flex: 1;
 }
 
 .keyboard-visual {
    display: flex;
    justify-content: center;
    align-items: center;
-   min-height: 280px;
+   width: 100%;
+   height: 100%;
 }
 
 .keyboard-display {
    display: flex;
    flex-direction: column;
    gap: 1px;
-   max-width: 550px;
+   width: 575px;
+   height: 280px;
+   min-width: 0;
+   margin: 0 auto;
 }
 
 .keyboard-row {
@@ -433,12 +448,13 @@ body.settings-body * {
    gap: 2px;
    align-items: center;
    justify-content: center;
+   flex-wrap: nowrap;
 }
 
 .key {
    flex-shrink: 0;
-   height: 26px;
-   min-height: 26px;
+   height: 34px;
+   min-height: 34px;
    display: flex;
    align-items: center;
    justify-content: center;
@@ -446,7 +462,7 @@ body.settings-body * {
    border-radius: 3px;
    background: rgba(255, 255, 255, 0.03);
    color: rgba(255, 255, 255, 0.65);
-   font-size: 8px;
+   font-size: 10px;
    font-weight: 600;
    cursor: pointer;
    transition: all 0.15s ease;
@@ -527,6 +543,41 @@ body.settings-body * {
    top: 24px;
 }
 
+@media (max-width: 1200px) {
+   .keyboard-panel-container {
+      grid-template-columns: 1fr 200px;
+   }
+}
+
+@media (max-width: 1200px) {
+   .keyboard-sidebar {
+      width: 160px;
+   }
+}
+
+@media (max-width: 768px) {
+   .keyboard-panel-container {
+      grid-template-columns: 1fr 140px;
+   }
+}
+
+@media (max-width: 600px) {
+   .keyboard-panel-container {
+      grid-template-columns: 1fr 120px;
+   }
+}
+
+@media (max-width: 900px) {
+   .keyboard-panel-container {
+      grid-template-columns: 1fr;
+   }
+   
+   .keyboard-sidebar {
+      position: relative;
+      top: 0;
+   }
+}
+
 .keyboard-sidebar-title {
    font-size: 12px;
    font-weight: 600;
@@ -545,10 +596,11 @@ body.settings-body * {
    display: flex;
    flex-direction: column;
    gap: 6px;
-   padding: 10px;
+   padding: 6px 4px;
    border-bottom: 1px solid #262626;
    transition: background-color 0.2s ease;
    font-size: 12px;
+   cursor: pointer;
 }
 
 .shortcut-item:last-child {

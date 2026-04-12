@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const keyEl = document.createElement("div");
         keyEl.className = "key";
         const size = row.sizes ? row.sizes[keyIdx] : 1;
-        keyEl.style.flex = `0 0 calc(${size} * 26px + ${size - 1} * 2px)`;
+        keyEl.style.flex = `0 0 calc(${size} * 34px + ${size - 1} * 3px)`;
         
         if (row.type === "function") {
           keyEl.classList.add("key-function");
@@ -446,17 +446,13 @@ document.addEventListener("DOMContentLoaded", () => {
       item.className = "shortcut-item";
       item.innerHTML = `
         <div class="shortcut-name">${config.name}</div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <div class="shortcut-key-display">
-            ${config.keys.map(k => `<span>${k === "Control" ? "Ctrl" : k}</span>`).join(" + ")}
-          </div>
-          <button class="shortcut-edit-btn" data-shortcut-id="${id}">Edit</button>
+        <div class="shortcut-key-display">
+          ${config.keys.map(k => `<span>${k === "Control" ? "Ctrl" : k}</span>`).join(" + ")}
         </div>
       `;
       shortcutsList.appendChild(item);
 
-      const editBtn = item.querySelector(".shortcut-edit-btn");
-      editBtn.addEventListener("click", () => {
+      item.addEventListener("click", () => {
         openShortcutRecorder(id, shortcuts);
       });
     });
