@@ -74,7 +74,7 @@
                 const response = await fetch('/tips.json');
                 tips = await response.json();
                 if (tips.length > 0) {
-                    displayTip(0);
+                    displayRandomTip();
                     startTipRotation();
                 }
             } catch (error) {
@@ -97,8 +97,14 @@
             });
         }
 
+        function displayRandomTip() {
+            if (!tips.length) return;
+            const randomIndex = Math.floor(Math.random() * tips.length);
+            displayTip(randomIndex);
+        }
+
         function nextTip() {
-            displayTip((currentTipIndex + 1) % tips.length);
+            displayRandomTip();
         }
 
         function startTipRotation() {
