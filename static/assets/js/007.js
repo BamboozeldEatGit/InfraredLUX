@@ -116,6 +116,13 @@ window.addEventListener("load", () => {
     }
     return url;
   }
+
+  // Check if there's a URL to open from home page command box
+  const urlToOpen = sessionStorage.getItem("urlToOpen");
+  if (urlToOpen) {
+    sessionStorage.removeItem("urlToOpen");
+    processUrl(urlToOpen);
+  }
 });
 document.addEventListener("DOMContentLoaded", event => {
   const addTabButton = document.getElementById("add-tab");
@@ -436,17 +443,152 @@ document.addEventListener("DOMContentLoaded", event => {
   const commandBoxSuggestions = document.getElementById("command-box-suggestions");
   let currentSuggestionIndex = -1;
   let suggestions = [];
+  window._tabsCommandLastWasMenu = window._tabsCommandLastWasMenu || false;
 
   function filterSuggestions(query) {
-    if (!query.trim()) {
+    // Check for /a, /games, /b, /apps shortcuts first
+    const lowerQuery = query.toLowerCase().trim();
+    currentSuggestionIndex = -1;
+    const isGamesPrefix = lowerQuery.startsWith("/a") || lowerQuery.startsWith("/games");
+    const isAppsPrefix = lowerQuery.startsWith("/b") || lowerQuery.startsWith("/apps");
+    const isMenuQuery = isGamesPrefix || isAppsPrefix;
+    // If we were showing a menu and now left it, animate existing items out
+    if (window._tabsCommandLastWasMenu && !isMenuQuery && commandBoxSuggestions && commandBoxSuggestions.children.length) {
+      // if the user cleared the input entirely, collapse the command box instead of closes it
+      if (!lowerQuery) {
+        const commandBox = document.querySelector('.command-box');
+        if (commandBox) {
+          commandBox.classList.remove('expanded');
+          // Animate collapse with Motion library
+          const motion = window.Motion;
+          if (motion?.animate) {
+            motion.animate(
+              commandBox,
+              { maxHeight: ["80vh", "50px"] },
+              { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+            );
+            // Fade out suggestions
+            motion.animate(
+              commandBoxSuggestions,
+              { opacity: [1, 0] },
+              { duration: 0.25, ease: [0.22, 1, 0.36, 1] }
+            );
+          }
+          setTimeout(() => {
+            commandBox.classList.add('collapsed');
+          }, 25);
+        }
+        commandBoxSuggestions.innerHTML = "";
+        window._tabsCommandLastWasMenu = false;
+        return;
+      }
+      Array.from(commandBoxSuggestions.children).forEach(c => { c.classList.remove('entering'); c.classList.add('exiting'); });
+      setTimeout(() => {
+        // Don't reset the flag yet; let it reset when normal suggestions are rendered
+        // continue with normal suggestion flow
+        filterSuggestions(query);
+      }, 220);
+      return;
+    }
+    if (isGamesPrefix) {
+      // Expand the command box if it was collapsed
+      const commandBox = document.querySelector('.command-box');
+      if (commandBox && commandBox.classList.contains('collapsed')) {
+        commandBox.classList.remove('collapsed');
+        const motion = window.Motion;
+        if (motion?.animate) {
+          motion.animate(
+            commandBox,
+            { maxHeight: ["50px", "80vh"] },
+            { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+          );
+          motion.animate(
+            commandBoxSuggestions,
+            { opacity: [0, 1] },
+            { duration: 0.25, ease: [0.22, 1, 0.36, 1] }
+          );
+        }
+        commandBox.classList.add('expanded');
+      }
+      // Fetch games list
+      fetch("/assets/json/g.json")
+        .then(res => res.json())
+        .then(games => {
+          // allow trailing filter text after the command
+          let filterTerm = "";
+          if (lowerQuery.startsWith("/games")) filterTerm = lowerQuery.replace(/^\/games\s*/, '');
+          else filterTerm = lowerQuery.replace(/^\/a\s*/, '');
+          const list = filterTerm ? games.filter(g => g.name.toLowerCase().includes(filterTerm)) : games;
+          suggestions = list.map((g, idx) => ({
+            title: g.name,
+            url: g.link,
+            icon: 'gamepad-2',
+            isMenuItem: true
+          }));
+          renderSuggestions();
+          window._tabsCommandLastWasMenu = true;
+        })
+        .catch(err => {
+          console.error("Error loading games:", err);
+          suggestions = [];
+          renderSuggestions();
+        });
+      return;
+    } else if (isAppsPrefix) {
+      // Expand the command box if it was collapsed
+      const commandBox = document.querySelector('.command-box');
+      if (commandBox && commandBox.classList.contains('collapsed')) {
+        commandBox.classList.remove('collapsed');
+        const motion = window.Motion;
+        if (motion?.animate) {
+          motion.animate(
+            commandBox,
+            { maxHeight: ["50px", "80vh"] },
+            { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+          );
+          motion.animate(
+            commandBoxSuggestions,
+            { opacity: [0, 1] },
+            { duration: 0.25, ease: [0.22, 1, 0.36, 1] }
+          );
+        }
+        commandBox.classList.add('expanded');
+      }
+      // Fetch apps list
+      fetch("/assets/json/a.json")
+        .then(res => res.json())
+        .then(apps => {
+          let filterTerm = "";
+          if (lowerQuery.startsWith("/apps")) filterTerm = lowerQuery.replace(/^\/apps\s*/, '');
+          else filterTerm = lowerQuery.replace(/^\/b\s*/, '');
+          const list = filterTerm ? apps.filter(a => a.name.toLowerCase().includes(filterTerm)) : apps;
+          suggestions = list.map((a, idx) => ({
+            title: a.name,
+            url: a.link,
+            icon: 'smartphone',
+            isMenuItem: true
+          }));
+          renderSuggestions();
+          window._tabsCommandLastWasMenu = true;
+        })
+        .catch(err => {
+          console.error("Error loading apps:", err);
+          suggestions = [];
+          renderSuggestions();
+        });
+      return;
+    } else if (!query.trim()) {
       suggestions = getSortedSuggestions();
+      // Reset menu flag when showing default suggestions
+      window._tabsCommandLastWasMenu = false;
     } else {
       const allSuggestions = getSortedSuggestions();
-      const lowerQuery = query.toLowerCase();
       suggestions = allSuggestions.filter(s =>
         s.title.toLowerCase().includes(lowerQuery) ||
         s.url.toLowerCase().includes(lowerQuery)
       );
+      // Reset menu flag when showing filtered suggestions
+      window._tabsCommandLastWasMenu = false;
     }
     renderSuggestions();
   }
@@ -473,6 +615,42 @@ document.addEventListener("DOMContentLoaded", event => {
     commandBoxOverlay.classList.remove("active");
     commandBoxInput.value = "";
     commandBoxSuggestions.innerHTML = "";
+  }
+
+  function renderSuggestions() {
+    commandBoxSuggestions.innerHTML = "";
+    // Do not visually highlight the input for menu commands (user requested no highlighting)
+    commandBoxInput.style.background = "transparent";
+    commandBoxInput.style.backgroundClip = "unset";
+    commandBoxInput.style.webkitBackgroundClip = "unset";
+
+    suggestions.forEach((suggestion, idx) => {
+      const div = document.createElement("div");
+      div.className = suggestion.isMenuItem ? "command-box-suggestion command-box-menu-item entering" : "command-box-suggestion entering";
+      
+      const iconHtml = `<i data-lucide="${suggestion.icon || 'globe'}" class="suggestion-icon"></i>`;
+      div.innerHTML = `\n        ${iconHtml}\n        <div class="suggestion-content">\n          <div class="suggestion-title">${suggestion.title}</div>\n        </div>\n      `;
+      
+      div.addEventListener("click", () => {
+        if (suggestion.isMenuItem) {
+          sessionStorage.setItem("urlToOpen", suggestion.url);
+          window.location.href = "/d";
+        } else {
+          navigateToSuggestion(suggestion);
+        }
+      });
+      
+      commandBoxSuggestions.appendChild(div);
+    });
+    // initialize lucide icons in the newly added nodes
+    window.lucide?.createIcons();
+    // animate entering -> entered
+    requestAnimationFrame(() => {
+      commandBoxSuggestions.querySelectorAll('.command-box-suggestion.entering').forEach(el => {
+        el.classList.remove('entering');
+        el.classList.add('entered');
+      });
+    });
   }
 
   // Auto-open command box if coming from Ctrl+K outside tabs
@@ -507,19 +685,26 @@ document.addEventListener("DOMContentLoaded", event => {
         closeCommandBox();
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const value = commandBoxInput.value.trim();
-        if (value && urlInput) {
-          urlInput.value = value;
-          const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
-          urlInput.dispatchEvent(enterEvent);
+        if (currentSuggestionIndex >= 0) {
+          const items = commandBoxSuggestions.querySelectorAll(".command-box-suggestion");
+          items[currentSuggestionIndex].click();
+        } else {
+          const value = commandBoxInput.value.trim();
+          if (value && urlInput) {
+            urlInput.value = value;
+            const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+            urlInput.dispatchEvent(enterEvent);
+          }
+          closeCommandBox();
         }
-        closeCommandBox();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
+        e.stopPropagation();
         currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
         updateSuggestionHighlight();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
+        e.stopPropagation();
         currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
         updateSuggestionHighlight();
       }
@@ -535,6 +720,14 @@ document.addEventListener("DOMContentLoaded", event => {
         item.classList.remove("active");
       }
     });
+    if (currentSuggestionIndex >= 0) {
+      const sel = items[currentSuggestionIndex];
+      requestAnimationFrame(() => {
+        if (sel && typeof sel.scrollIntoView === 'function') {
+          try { sel.scrollIntoView({ block: 'nearest', behavior: 'auto' }); } catch (e) { /* ignore */ }
+        }
+      });
+    }
   }
 
   // Add new tab opens command box

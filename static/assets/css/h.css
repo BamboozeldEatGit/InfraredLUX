@@ -85,3 +85,9 @@
         background-position: 200% 50%;
     }
 }
+
+/* Hide Games and Apps tabs only in home page navbar */
+.home-hero-nav .nav-item[href="/a"],
+.home-hero-nav .nav-item[href="/b"] {
+    display: none;
+}
