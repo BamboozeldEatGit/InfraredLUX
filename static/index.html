@@ -63,6 +63,57 @@
     <script src="/vendor/motion/motion.js"></script>
     <script src="/assets/js/home-motion.js"></script>
 
+    <script>
+        // Tips rotation system
+        let tips = [];
+        let currentTipIndex = 0;
+        let tipRotationInterval;
+
+        async function loadTips() {
+            try {
+                const response = await fetch('/tips.json');
+                tips = await response.json();
+                if (tips.length > 0) {
+                    displayTip(0);
+                    startTipRotation();
+                }
+            } catch (error) {
+                console.error('Error loading tips:', error);
+            }
+        }
+
+        function displayTip(index) {
+            if (!tips.length) return;
+
+            const subtitle = document.getElementById('dynamic-subtitle');
+            if (!subtitle) return;
+
+            currentTipIndex = index % tips.length;
+            const tip = tips[currentTipIndex];
+
+            window.animateHomeTipExit(() => {
+                subtitle.textContent = tip.content;
+                window.animateHomeTipReveal(false);
+            });
+        }
+
+        function nextTip() {
+            displayTip((currentTipIndex + 1) % tips.length);
+        }
+
+        function startTipRotation() {
+            const subtitle = document.getElementById('dynamic-subtitle');
+            if (subtitle) {
+                subtitle.addEventListener('click', nextTip);
+
+                // Auto-rotate tips every 6 seconds
+                tipRotationInterval = setInterval(nextTip, 6000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTips);
+    </script>
+
     <!-- Global Command Box for all pages -->
     <div id="global-command-box-overlay" class="command-box-overlay">
         <div class="command-box-wrapper">
