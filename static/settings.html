@@ -36,7 +36,7 @@
           </div>
 
           <div class="settings-search-wrap">
-            <input class="settings-search" type="text" placeholder="Search settings Ctrl+F"
+            <input class="settings-search" type="text" placeholder="Temporarily unavailable"
               aria-label="Search settings" />
           </div>
 
@@ -51,6 +51,18 @@
                 </svg>
               </span>
               <span class="settings-tab-label">General</span>
+            </button>
+            <button class="settings-tab" type="button" data-settings-tab="keyboard" aria-selected="false">
+              <span class="settings-tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="5" width="20" height="14" rx="1"></rect>
+                  <path d="M6 9h.01"></path>
+                  <path d="M10 9h.01"></path>
+                  <path d="M14 9h.01"></path>
+                  <path d="M6 13h10"></path>
+                </svg>
+              </span>
+              <span class="settings-tab-label">Keyboard</span>
             </button>
             <button class="settings-tab" type="button" data-settings-tab="about" aria-selected="false">
               <span class="settings-tab-icon" aria-hidden="true">
@@ -141,6 +153,28 @@
                 </div>
               </div>
               <p class="settings-warning">Importing a save file will overwrite your current saved data.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-panel" data-settings-panel="keyboard" hidden>
+          <div class="settings-panel-header" data-animate-item>
+            <h2>Keyboard Shortcuts</h2>
+          </div>
+
+          <div class="keyboard-panel-container" data-animate-item>
+            <div class="keyboard-main">
+              <div class="keyboard-visual">
+                <div id="keyboard-display" class="keyboard-display">
+                  <!-- Full keyboard will be generated here -->
+                </div>
+              </div>
+            </div>
+            <div class="keyboard-sidebar">
+              <div class="keyboard-sidebar-title">Shortcuts</div>
+              <div id="shortcuts-list" class="shortcuts-list">
+                <!-- Shortcuts will be populated here -->
+              </div>
             </div>
           </div>
         </section>
