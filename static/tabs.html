@@ -155,6 +155,56 @@
     </div>
   </div>
 
+  <!-- Personalization Settings Loader -->
+  <script>
+    function loadPersonalizationSettings() {
+      const PERSONALIZATION_KEY = "infraredPersonalization";
+      const stored = localStorage.getItem(PERSONALIZATION_KEY);
+      const settings = stored ? JSON.parse(stored) : {
+        backgroundImage: null,
+        backgroundColor: "#1a1a1a",
+        useDefaultBackground: true,
+        showLogo: true,
+        showNavbar: true,
+        showTips: true
+      };
+
+      // Apply background
+      const wallpaperBlur = document.querySelector('.wallpaper-blur');
+
+      if (settings.useDefaultBackground) {
+        // Use default background
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = "url('/assets/media/homebg.png')";
+          wallpaperBlur.style.backgroundColor = '';
+        }
+      } else if (settings.backgroundImage) {
+        // Use custom image
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = `url('${settings.backgroundImage}')`;
+          wallpaperBlur.style.backgroundSize = 'cover';
+          wallpaperBlur.style.backgroundPosition = 'center';
+        }
+      } else if (settings.backgroundColor) {
+        // Use custom color
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = '';
+          wallpaperBlur.style.backgroundColor = settings.backgroundColor;
+        }
+      }
+    }
+
+    // Load on page load
+    document.addEventListener('DOMContentLoaded', loadPersonalizationSettings);
+
+    // Listen for storage changes from settings panel
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'infraredPersonalization') {
+        loadPersonalizationSettings();
+      }
+    });
+  </script>
+
   <!-- End of body -->
 </body>
 

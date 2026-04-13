@@ -28,6 +28,127 @@ The Control key was not being highlighted in the keyboard diagram when shortcuts
    const displayKey = key === "Control" ? "Ctrl" : (key !== "Space" ? key : "");
    keyEl.textContent = displayKey;
    ```
+
+## Result
+- Control key now properly highlights when Control+K (Command Box) shortcut is active
+- UI shows "Ctrl" for readability
+- Internal key matching works correctly
+
+---
+
+# Personalization Tab Feature
+
+## Changes Made
+
+### 1. HTML - Settings Panel (`static/settings.html`)
+- Added new "Personalization" tab button with custom SVG icon in the settings sidebar
+- Added new personalization panel with three main sections:
+  - **Appearance**: Background image upload and color picker
+  - **Visibility**: Toggle switches for:
+    - Infrared logo display
+    - Navigation bar display
+    - Tips display
+
+### 2. CSS Styles (`static/assets/css/settings.css`)
+- `.toggle-switch`: Styled toggle switch with smooth transitions
+  - Width: 52px, Height: 28px
+  - Active state: Cyan highlight (rgba(100, 200, 255, ...))
+  - Slider animation on checked state
+- `.toggle-slider`: Visual toggle slider with ::after pseudo-element
+- `.personalization-btn`: Button for uploading background images
+  - Cyan highlight theme matching other UI elements
+- `#bg-color-input`: Styled color picker (50x40px)
+
+### 3. JavaScript - Settings Logic (`static/assets/js/settings-page.js`)
+- `PERSONALIZATION_KEY`: localStorage key for storing settings
+- `getPersonalizationSettings()`: Retrieves settings from localStorage with defaults
+- `savePersonalizationSettings()`: Saves settings and applies them immediately
+- `applyPersonalizationSettings()`: Applies settings to current window and iframes
+- `initPersonalization()`: Initializes UI and event listeners:
+  - Toggle switches: Show/hide logo, navbar, tips
+  - Color picker: Change background color
+  - File upload: Upload custom background image
+
+### 4. Home Page Integration (`static/index.html`)
+- `loadPersonalizationSettings()`: Loads and applies saved settings on page load
+- Applies background image/color to `.wallpaper` element
+- Toggles visibility of:
+  - `.title` (Infrared logo)
+  - `.navbar` (navigation bar)
+  - `#dynamic-subtitle` (tips)
+
+## Data Storage
+- **Key**: `infraredPersonalization`
+- **Format**: JSON object with properties:
+  ```json
+  {
+    "backgroundImage": "data:image/...[base64]" or null,
+    "backgroundColor": "#1a1a1a",
+    "showLogo": true,
+    "showNavbar": true,
+    "showTips": true
+  }
+  ```
+
+## Feature Behavior
+- Settings persist across page refreshes using localStorage
+- Background images are stored as base64 data URLs
+- Changes apply immediately to the home page
+- All settings default to showing/enabled on first load
+- UI uses cyan highlight color (rgba(100, 200, 255, ...)) matching Infrared theme
+
+---
+
+# Personalization UI & Hidden Navigation Updates
+
+## Spacing & Layout Fixes
+
+### 1. Toggle Switch Styling (`static/assets/css/settings.css`)
+- Increased toggle switch size: 52px → 56px width, 28px → 32px height
+- Added padding to toggle-switch: 12px vertical
+- Improved toggle slider dimensions: 22px → 24px diameter circle
+- Better slider position on checked: left 26px → 27px
+- Enhanced visual spacing for better readability
+
+### 2. Personalization Tab Icon (`static/settings.html`)
+- Updated icon from clock/timer to palette icon
+- Better represents personalization/customization feature
+- SVG path: Palette with dot accent showing customization theme
+
+## Hidden Navigation Bar (Top Hover)
+
+### 3. Hidden Navigation Overlay CSS (`static/assets/css/nav.css`)
+- `.hidden-nav-overlay`: Fixed overlay at top of page
+  - Height: 50px
+  - Only visible on hover when navbar is hidden
+  - Smooth opacity transition (0.3s)
+  
+- `.hidden-nav-links`: Hidden quick access links
+  - Position: Top-right corner
+  - Links: "Tabs" and "Settings"
+  - Appears on hover above the page content
+  - Cyan highlight theme matching Infrared
+  - Semi-transparent dark background with blur effect
+
+### 4. Home Page HTML (`static/index.html`)
+- Added hidden-nav-overlay element before main content
+- Contains two quick-access links:
+  - Tabs: `/d`
+  - Settings: `/c`
+- Only displayed when navbar is hidden (personalization setting)
+
+### 5. Personalization JavaScript Updates (`static/assets/js/settings-page.js` & `static/index.html`)
+- Updated `applyPersonalizationSettings()` to manage hidden nav overlay
+- Added class toggle: `navbar-hidden` when navbar is hidden
+- Hidden nav overlay appears at top when navbar is disabled
+- Smooth hover reveal with backdrop blur effect
+
+## Behavior
+- When navbar is visible: Hidden nav overlay is inactive
+- When navbar is hidden: Hidden nav overlay becomes active and appears on hover
+- Hover zone is 50px at the top of the page
+- Links quickly fade in with backdrop-filter blur effect
+- Settings persist when toggling navbar visibility
    This provides consistent naming throughout the codebase while showing the abbreviated "Ctrl" in the UI.
 
 ## Result

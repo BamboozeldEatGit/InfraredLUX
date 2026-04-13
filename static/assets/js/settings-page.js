@@ -534,9 +534,290 @@ document.addEventListener("DOMContentLoaded", () => {
     renderShortcutsList(shortcuts);
   }
 
+  // Personalization Settings Management
+  const PERSONALIZATION_KEY = "infraredPersonalization";
+
+  function getPersonalizationSettings() {
+    const stored = localStorage.getItem(PERSONALIZATION_KEY);
+    return stored ? JSON.parse(stored) : {
+      backgroundImage: null,
+      backgroundColor: "#1a1a1a",
+      useDefaultBackground: true,
+      showLogo: true,
+      showNavbar: true,
+      showTips: true
+    };
+  }
+
+  function savePersonalizationSettings(settings) {
+    localStorage.setItem(PERSONALIZATION_KEY, JSON.stringify(settings));
+    applyPersonalizationSettings(settings);
+  }
+
+  function applyPersonalizationSettings(settings) {
+    // Apply to current page (if on home)
+    applyPersonalizationToWindow(window, settings);
+    
+    // Update hidden nav overlay for main window
+    try {
+      const hiddenNavOverlay = window.document.getElementById('hidden-nav-overlay');
+      if (hiddenNavOverlay) {
+        if (!settings.showNavbar) {
+          hiddenNavOverlay.classList.add('navbar-hidden');
+        } else {
+          hiddenNavOverlay.classList.remove('navbar-hidden');
+        }
+      }
+    } catch (e) {
+      // Skip if no hidden nav overlay
+    }
+    
+    // Update iframe if exists
+    try {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach(iframe => {
+        try {
+          if (iframe.contentWindow) {
+            applyPersonalizationToWindow(iframe.contentWindow, settings);
+            const hiddenNavOverlay = iframe.contentWindow.document.getElementById('hidden-nav-overlay');
+            if (hiddenNavOverlay) {
+              if (!settings.showNavbar) {
+                hiddenNavOverlay.classList.add('navbar-hidden');
+              } else {
+                hiddenNavOverlay.classList.remove('navbar-hidden');
+              }
+            }
+          }
+        } catch (e) {
+          // Cross-origin iframe, skip
+        }
+      });
+    } catch (e) {
+      // Skip if no iframes
+    }
+  }
+
+  function applyPersonalizationToWindow(win, settings) {
+    try {
+      const doc = win.document;
+      
+      // Apply background to wallpaper, blur, and navbar
+      const wallpaper = doc.querySelector('.wallpaper');
+      const wallpaperBlur = doc.querySelector('.wallpaper-blur');
+      const navbar = doc.querySelector('.navbar');
+      
+      if (settings.useDefaultBackground) {
+        // Use default background
+        if (wallpaper) {
+          wallpaper.style.backgroundImage = "url('/assets/media/homebg.png')";
+          wallpaper.style.backgroundColor = '';
+        }
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = "url('/assets/media/homebg.png')";
+          wallpaperBlur.style.backgroundColor = '';
+        }
+        if (navbar) {
+          navbar.style.backgroundImage = '';
+          navbar.style.backgroundColor = '';
+        }
+      } else if (settings.backgroundImage) {
+        // Use custom uploaded image
+        if (wallpaper) {
+          wallpaper.style.backgroundImage = `url('${settings.backgroundImage}')`;
+          wallpaper.style.backgroundSize = 'cover';
+          wallpaper.style.backgroundPosition = 'center';
+        }
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = `url('${settings.backgroundImage}')`;
+          wallpaperBlur.style.backgroundSize = 'cover';
+          wallpaperBlur.style.backgroundPosition = 'center';
+        }
+        if (navbar) {
+          navbar.style.backgroundImage = `url('${settings.backgroundImage}')`;
+          navbar.style.backgroundSize = 'cover';
+          navbar.style.backgroundPosition = 'center';
+        }
+      } else if (settings.backgroundColor) {
+        // Use custom color
+        if (wallpaper) {
+          wallpaper.style.backgroundImage = '';
+          wallpaper.style.backgroundColor = settings.backgroundColor;
+        }
+        if (wallpaperBlur) {
+          wallpaperBlur.style.backgroundImage = '';
+          wallpaperBlur.style.backgroundColor = settings.backgroundColor;
+        }
+        if (navbar) {
+          navbar.style.backgroundImage = '';
+          navbar.style.backgroundColor = settings.backgroundColor;
+        }
+      }
+      
+      // Toggle logo
+      const logo = doc.querySelector('.title');
+      if (logo) {
+        logo.style.display = settings.showLogo ? 'block' : 'none';
+      }
+      
+      // Toggle navbar
+      if (navbar) {
+        navbar.style.display = settings.showNavbar ? 'flex' : 'none';
+      }
+      
+      // Toggle tips
+      const subtitle = doc.querySelector('.subtitle, #dynamic-subtitle');
+      if (subtitle) {
+        subtitle.style.display = settings.showTips ? 'block' : 'none';
+      }
+    } catch (e) {
+      console.error('Error applying personalization:', e);
+    }
+  }
+
+  function initPersonalization() {
+    const settings = getPersonalizationSettings();
+    
+    // Update UI to reflect stored settings
+    const logoToggle = document.getElementById('toggle-logo');
+    const navbarToggle = document.getElementById('toggle-navbar');
+    const tipsToggle = document.getElementById('toggle-tips');
+    const bgUploadBtn = document.getElementById('bg-upload-btn');
+    const bgImageInput = document.getElementById('bg-image-input');
+    const bgDefaultRadio = document.getElementById('bg-default-radio');
+    const bgCustomRadio = document.getElementById('bg-custom-radio');
+    const bgDefaultPreview = document.getElementById('bg-default-preview');
+    const bgCustomPreview = document.getElementById('bg-custom-preview');
+    
+    if (logoToggle) logoToggle.checked = settings.showLogo;
+    if (navbarToggle) navbarToggle.checked = settings.showNavbar;
+    if (tipsToggle) tipsToggle.checked = settings.showTips;
+    
+    // Set radio button based on settings
+    if (settings.useDefaultBackground) {
+      if (bgDefaultRadio) bgDefaultRadio.checked = true;
+    } else {
+      if (bgCustomRadio) bgCustomRadio.checked = true;
+    }
+    
+    // Update preview boxes
+    const updatePreviews = () => {
+      // Default preview (always show as default background)
+      if (bgDefaultPreview) {
+        bgDefaultPreview.style.backgroundImage = 'url("/assets/media/homebg.png")';
+        bgDefaultPreview.style.backgroundColor = '';
+      }
+      
+      // Custom preview
+      if (bgCustomPreview) {
+        if (settings.backgroundImage) {
+          bgCustomPreview.style.backgroundImage = `url('${settings.backgroundImage}')`;
+          bgCustomPreview.style.backgroundColor = '';
+        } else if (settings.backgroundColor) {
+          bgCustomPreview.style.backgroundImage = '';
+          bgCustomPreview.style.backgroundColor = settings.backgroundColor;
+        } else {
+          bgCustomPreview.style.backgroundImage = '';
+          bgCustomPreview.style.backgroundColor = '#1a1a1a';
+        }
+      }
+    };
+    
+    updatePreviews();
+    
+    // Event listeners
+    if (logoToggle) {
+      logoToggle.addEventListener('change', (e) => {
+        settings.showLogo = e.target.checked;
+        savePersonalizationSettings(settings);
+      });
+    }
+    
+    if (navbarToggle) {
+      navbarToggle.addEventListener('change', (e) => {
+        settings.showNavbar = e.target.checked;
+        savePersonalizationSettings(settings);
+      });
+    }
+    
+    if (tipsToggle) {
+      tipsToggle.addEventListener('change', (e) => {
+        settings.showTips = e.target.checked;
+        savePersonalizationSettings(settings);
+      });
+    }
+    
+    if (bgUploadBtn) {
+      bgUploadBtn.addEventListener('click', () => {
+        bgImageInput?.click();
+      });
+    }
+    
+    if (bgImageInput) {
+      bgImageInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            settings.backgroundImage = event.target?.result;
+            settings.backgroundColor = '#1a1a1a';
+            settings.useDefaultBackground = false;
+            if (bgCustomRadio) bgCustomRadio.checked = true;
+            updatePreviews();
+            savePersonalizationSettings(settings);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+    
+    // Radio button listeners
+    if (bgDefaultRadio) {
+      bgDefaultRadio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          settings.useDefaultBackground = true;
+          updatePreviews();
+          savePersonalizationSettings(settings);
+        }
+      });
+    }
+    
+    if (bgCustomRadio) {
+      bgCustomRadio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          settings.useDefaultBackground = false;
+          updatePreviews();
+          savePersonalizationSettings(settings);
+        }
+      });
+    }
+    
+    // Click on preview boxes to toggle
+    if (bgDefaultPreview) {
+      bgDefaultPreview.addEventListener('click', () => {
+        settings.useDefaultBackground = true;
+        if (bgDefaultRadio) bgDefaultRadio.checked = true;
+        updatePreviews();
+        savePersonalizationSettings(settings);
+      });
+    }
+    
+    if (bgCustomPreview) {
+      bgCustomPreview.addEventListener('click', () => {
+        settings.useDefaultBackground = false;
+        if (bgCustomRadio) bgCustomRadio.checked = true;
+        updatePreviews();
+        savePersonalizationSettings(settings);
+      });
+    }
+    
+    // Apply settings on load
+    applyPersonalizationSettings(settings);
+  }
+
   syncSearchEngineUI();
   syncProxyUI();
   initKeyboardShortcuts();
+  initPersonalization();
   showPanel("general", true);
   
   // Delay animation to allow DOM to render initial state

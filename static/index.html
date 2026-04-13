@@ -15,6 +15,12 @@
 </head>
 
 <body>
+    <div class="hidden-nav-overlay" id="hidden-nav-overlay">
+        <div class="hidden-nav-links">
+            <a href="/d" title="Tabs">Tabs</a>
+            <a href="/c" title="Settings">Settings</a>
+        </div>
+    </div>
     <div class="home">
         <div class="wallpaper-blur"></div>
         <div class="web">
@@ -118,6 +124,106 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadTips);
+
+        // Personalization Settings
+        function loadPersonalizationSettings() {
+            const PERSONALIZATION_KEY = "infraredPersonalization";
+            const stored = localStorage.getItem(PERSONALIZATION_KEY);
+            const settings = stored ? JSON.parse(stored) : {
+                backgroundImage: null,
+                backgroundColor: "#1a1a1a",
+                useDefaultBackground: true,
+                showLogo: true,
+                showNavbar: true,
+                showTips: true
+            };
+
+            // Apply background
+            const wallpaper = document.querySelector('.wallpaper');
+            const wallpaperBlur = document.querySelector('.wallpaper-blur');
+            const navbar = document.querySelector('.navbar');
+
+            if (settings.useDefaultBackground) {
+                // Use default background
+                if (wallpaper) {
+                    wallpaper.style.backgroundImage = "url('/assets/media/homebg.png')";
+                    wallpaper.style.backgroundColor = '';
+                }
+                if (wallpaperBlur) {
+                    wallpaperBlur.style.backgroundImage = "url('/assets/media/homebg.png')";
+                    wallpaperBlur.style.backgroundColor = '';
+                }
+                if (navbar) {
+                    navbar.style.backgroundImage = '';
+                    navbar.style.backgroundColor = '';
+                }
+            } else if (settings.backgroundImage) {
+                // Use custom image
+                if (wallpaper) {
+                    wallpaper.style.backgroundImage = `url('${settings.backgroundImage}')`;
+                    wallpaper.style.backgroundSize = 'cover';
+                    wallpaper.style.backgroundPosition = 'center';
+                }
+                if (wallpaperBlur) {
+                    wallpaperBlur.style.backgroundImage = `url('${settings.backgroundImage}')`;
+                    wallpaperBlur.style.backgroundSize = 'cover';
+                    wallpaperBlur.style.backgroundPosition = 'center';
+                }
+                if (navbar) {
+                    navbar.style.backgroundImage = `url('${settings.backgroundImage}')`;
+                    navbar.style.backgroundSize = 'cover';
+                    navbar.style.backgroundPosition = 'center';
+                }
+            } else if (settings.backgroundColor) {
+                // Use custom color
+                if (wallpaper) {
+                    wallpaper.style.backgroundImage = '';
+                    wallpaper.style.backgroundColor = settings.backgroundColor;
+                }
+                if (wallpaperBlur) {
+                    wallpaperBlur.style.backgroundImage = '';
+                    wallpaperBlur.style.backgroundColor = settings.backgroundColor;
+                }
+                if (navbar) {
+                    navbar.style.backgroundImage = '';
+                    navbar.style.backgroundColor = settings.backgroundColor;
+                }
+            }
+
+            // Toggle logo visibility
+            const logo = document.querySelector('.title');
+            if (logo) {
+                logo.style.display = settings.showLogo ? 'block' : 'none';
+            }
+
+            // Toggle navbar visibility
+            const hiddenNavOverlay = document.getElementById('hidden-nav-overlay');
+            if (navbar) {
+                navbar.style.display = settings.showNavbar ? 'flex' : 'none';
+                if (hiddenNavOverlay) {
+                    if (!settings.showNavbar) {
+                        hiddenNavOverlay.classList.add('navbar-hidden');
+                    } else {
+                        hiddenNavOverlay.classList.remove('navbar-hidden');
+                    }
+                }
+            }
+
+            // Toggle tips visibility
+            const subtitle = document.getElementById('dynamic-subtitle');
+            if (subtitle) {
+                subtitle.style.display = settings.showTips ? 'block' : 'none';
+            }
+        }
+
+        // Listen for storage changes from settings panel
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'infraredPersonalization') {
+                loadPersonalizationSettings();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadPersonalizationSettings);
     </script>
 
     <!-- Global Command Box for all pages -->
