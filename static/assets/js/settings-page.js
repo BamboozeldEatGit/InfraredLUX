@@ -378,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
       { keys: ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"], sizes: [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5] },
       { keys: ["CapsLock", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter"], sizes: [1.8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.2] },
       { keys: ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"], sizes: [2.3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.7] },
-      { keys: ["Ctrl", "Alt", "Space", "Alt", "Ctrl"], sizes: [1.25, 1.25, 6, 1.25, 1.25] },
+      { keys: ["Control", "Alt", "Space", "Alt", "Control"], sizes: [1.25, 1.25, 6, 1.25, 1.25] },
     ];
 
     const activeKeys = new Set();
@@ -415,7 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
           keyEl.classList.add("key-function");
         }
 
-        keyEl.textContent = key !== "Space" ? key : "";
+        const displayKey = key === "Control" ? "Ctrl" : (key !== "Space" ? key : "");
+        keyEl.textContent = displayKey;
         
         if (activeKeys.has(key.toUpperCase())) {
           keyEl.classList.add("active");

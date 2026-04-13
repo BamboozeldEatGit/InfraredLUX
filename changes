@@ -1,0 +1,36 @@
+# Keyboard Diagram Fixes
+
+## Issue
+The Control key was not being highlighted in the keyboard diagram when shortcuts containing Control were active.
+
+## Root Cause
+- The keyboard layout had the Control key labeled as "Ctrl" (abbreviated)
+- The shortcuts system stored the key name as "Control" (full name)
+- When checking if a key should be highlighted, the comparison was:
+  - "CTRL" (from keyboard layout) vs "CONTROL" (from shortcuts)
+  - These didn't match, so highlighting failed
+
+## Solution
+### File: `static/assets/js/settings-page.js`
+
+1. **Line 381**: Changed keyboard layout bottom row from:
+   ```javascript
+   { keys: ["Ctrl", "Alt", "Space", "Alt", "Ctrl"], sizes: [1.25, 1.25, 6, 1.25, 1.25] }
+   ```
+   To:
+   ```javascript
+   { keys: ["Control", "Alt", "Space", "Alt", "Control"], sizes: [1.25, 1.25, 6, 1.25, 1.25] }
+   ```
+   This ensures the internal key name matches the shortcuts storage.
+
+2. **Line 418**: Updated key display to show "Ctrl" abbreviation while maintaining "Control" internally:
+   ```javascript
+   const displayKey = key === "Control" ? "Ctrl" : (key !== "Space" ? key : "");
+   keyEl.textContent = displayKey;
+   ```
+   This provides consistent naming throughout the codebase while showing the abbreviated "Ctrl" in the UI.
+
+## Result
+- Control key now properly highlights when Control+K (Command Box) shortcut is active
+- UI shows "Ctrl" for readability
+- Internal key matching works correctly
