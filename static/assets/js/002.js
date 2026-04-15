@@ -275,17 +275,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let path = "/assets/json/a.min.json";
 if (g) {
-  path = "/assets/json/g.min.json";
+  // Use non-minified here because game lists are frequently edited.
+  path = "/assets/json/g.json";
 } else if (c) {
   path = "/assets/json/t.min.json";
 } else if (a) {
   path = "/assets/json/a.min.json";
 }
+
+function normalizeEntry(entry) {
+  if (!entry || typeof entry !== "object") return null;
+
+  // New schema support: { id, title, category, type, src, description }
+  const isNewSchema =
+    typeof entry.title === "string" ||
+    typeof entry.id === "string" ||
+    typeof entry.type === "string";
+
+  if (isNewSchema) {
+    const categories = String(entry.category || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const normalized = {
+      name: entry.title || entry.id || "Untitled",
+      link: entry.src || entry.link || "",
+      image: entry.image,
+      categories: ["all", ...categories],
+    };
+
+    if (!normalized.link) {
+      normalized.say =
+        "This entry is missing a playable URL (src). Add a src to enable launching.";
+    }
+
+    return normalized;
+  }
+
+  // Existing schema support: { name, link, image, categories, ... }
+  const categories = Array.isArray(entry.categories) ? entry.categories : ["all"];
+  return { ...entry, categories };
+}
+
 fetch(path)
   .then(response => {
     return response.json();
   })
   .then(appsList => {
+    appsList = Array.isArray(appsList)
+      ? appsList.map(normalizeEntry).filter(Boolean)
+      : [];
+
     appsList.sort((a, b) => {
       if (a.name.startsWith("[Custom]")) {
         return -1;
