@@ -11,6 +11,43 @@ body {
   position: relative;
 }
 
+.page-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: block;
+  background: #04070c;
+  opacity: 1;
+  transition: opacity 320ms ease;
+}
+
+.page-preloader.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.page-preloader-terminal {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.page-preloader-line {
+  margin: 0 0 10px;
+}
+
+.page-preloader-barline {
+  margin: 0;
+  color: rgba(var(--infrared-accent-rgb, 100, 200, 255), 0.92);
+  letter-spacing: 0.02em;
+}
+
 .page-shell {
   position: relative;
   width: 100%;
