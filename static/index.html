@@ -1,32 +1,380 @@
-<!doctype html>
-<html lang="en" data-infrared-shell="true">
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="/favicon.png" />
-    <title>INFRARED</title>
-    <link rel="stylesheet" href="/assets/css/page-shell.css" />
+    <link rel="shortcut icon" id="tab-favicon" href="favicon.png" />
+    <title id="t">Settings</title>
+    <link rel="stylesheet" id="global" href="/assets/css/global.css?v=6" />
+    <link rel="stylesheet" href="/assets/css/settings.css?v=07" />
+    <script src="/assets/js/frame-bridge.js"></script>
 </head>
 
-<body>
-    <div class="page-preloader" id="page-preloader" aria-hidden="false">
-        <div class="page-preloader-terminal">
-            <div class="page-preloader-line">LOADING</div>
-            <div class="page-preloader-barline" id="page-preloader-barline">[....................]</div>
+<body class="settings-body">
+    <div class="settings-shell">
+        <header class="settings-topbar">
+            <a href="/" class="settings-back" aria-label="Return to Home">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19 12H5"></path>
+                    <path d="m12 19-7-7 7-7"></path>
+                </svg>
+                <span>Return to Home</span>
+            </a>
+        </header>
+
+        <div class="settings-layout">
+            <aside class="settings-sidebar">
+                <div class="settings-sidebar-inner">
+                    <div class="settings-account">
+                        <div class="settings-account-copy">
+                            <p class="settings-account-name">Infrared</p>
+                            <p class="settings-account-meta">Settings Panel</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-search-wrap">
+                        <input class="settings-search" type="text" placeholder="Temporarily unavailable"
+                            aria-label="Search settings" />
+                    </div>
+
+                    <nav class="settings-tablist" aria-label="Settings Sections">
+                        <button class="settings-tab is-active" type="button" data-settings-tab="general"
+                            aria-selected="true">
+                            <span class="settings-tab-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82 2 2 0 1 1-2.83 2.83 1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51 2 2 0 1 1-4 0 1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33 2 2 0 1 1-2.83-2.83 1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1 2 2 0 1 1 0-4 1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82 2 2 0 1 1 2.83-2.83 1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 .99-1.51 2 2 0 1 1 4 0 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33 2 2 0 1 1 2.83 2.83 1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51.99 2 2 0 1 1 0 4 1.65 1.65 0 0 0-1.51 1z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span class="settings-tab-label">General</span>
+                        </button>
+                        <button class="settings-tab" type="button" data-settings-tab="keyboard" aria-selected="false">
+                            <span class="settings-tab-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="5" width="20" height="14" rx="1"></rect>
+                                    <path d="M6 9h.01"></path>
+                                    <path d="M10 9h.01"></path>
+                                    <path d="M14 9h.01"></path>
+                                    <path d="M6 13h10"></path>
+                                </svg>
+                            </span>
+                            <span class="settings-tab-label">Keyboard</span>
+                        </button>
+                        <button class="settings-tab" type="button" data-settings-tab="personalization"
+                            aria-selected="false">
+                            <span class="settings-tab-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <span class="settings-tab-label">Personalization</span>
+                        </button>
+                        <button class="settings-tab" type="button" data-settings-tab="about" aria-selected="false">
+                            <span class="settings-tab-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 16v-4"></path>
+                                    <path d="M12 8h.01"></path>
+                                </svg>
+                            </span>
+                            <span class="settings-tab-label">About</span>
+                        </button>
+                    </nav>
+                </div>
+            </aside>
+
+            <main class="settings-content">
+                <section class="settings-panel is-active" data-settings-panel="general">
+                    <div class="settings-panel-header" data-animate-item>
+                        <h2>General</h2>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Search</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row settings-row-stack">
+                                <div class="settings-row-copy">
+                                    <h3>Search engine</h3>
+                                    <p>Choose the default engine used whenever you search from Infrared.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <select title="engine" id="engine">
+                                        <option value="DuckDuckGo">DuckDuckGo</option>
+                                        <option value="Google">Google</option>
+                                        <option value="Bing">Bing</option>
+                                        <option value="Qwant">Qwant</option>
+                                        <option value="Startpage">Startpage</option>
+                                        <option value="SearchEncrypt">SearchEncrypt</option>
+                                        <option value="Ecosia">Ecosia</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-divider"></div>
+
+                            <div class="settings-row settings-row-stack">
+                                <div class="settings-row-copy">
+                                    <h3>Custom engine URL</h3>
+                                    <p>Paste a custom search base URL if you want to override the built-in list.</p>
+                                </div>
+                                <div class="settings-inline-form">
+                                    <input class="settings-input" type="text" id="engine-form"
+                                        placeholder="https://duckduckgo.com/?q=" name="engine" />
+                                    <button class="settings-action settings-action-primary" id="save-engine"
+                                        type="button">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Connection</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row settings-row-stack">
+                                <div class="settings-row-copy">
+                                    <h3>Proxy mode</h3>
+                                    <p>Infrared Turbo is the default. Dynamic is faster on some sites but can be less
+                                        stable.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <select id="pChange">
+                                        <option value="uv">Infrared Turbo (Default)</option>
+                                        <option value="dy">Dynamic (Doesn't work in about:blank)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Data</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Save data management</h3>
+                                    <p>Export your current local save data or import it on another Infrared site later.
+                                    </p>
+                                </div>
+                                <div class="settings-actions">
+                                    <button class="settings-action" id="export-save" type="button">Export</button>
+                                    <button class="settings-action" id="import-save" type="button">Import</button>
+                                </div>
+                            </div>
+                            <p class="settings-warning">Importing a save file will overwrite your current saved data.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-panel" data-settings-panel="keyboard" hidden>
+                    <div class="settings-panel-header" data-animate-item>
+                        <h2>Keyboard Shortcuts</h2>
+                    </div>
+
+                    <div class="keyboard-panel-container" data-animate-item>
+                        <div class="keyboard-main">
+                            <div class="keyboard-visual">
+                                <div id="keyboard-display" class="keyboard-display">
+                                    <!-- Full keyboard will be generated here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="keyboard-sidebar">
+                            <div class="keyboard-sidebar-title">Shortcuts</div>
+                            <div id="shortcuts-list" class="shortcuts-list">
+                                <!-- Shortcuts will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-panel" data-settings-panel="personalization" hidden>
+                    <div class="settings-panel-header" data-animate-item>
+                        <h2>Personalization</h2>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Appearance</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row settings-row-stack">
+                                <div class="settings-row-copy">
+                                    <h3>Background</h3>
+                                    <p>Choose your background or upload a custom image.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <div class="personalization-bg-group">
+                                        <input type="file" id="bg-image-input" accept="image/*"
+                                            style="display: none;" />
+
+                                        <!-- Default Background Preview -->
+                                        <div class="bg-preview-container">
+                                            <div class="bg-preview" id="bg-default-preview" title="Default Background">
+                                            </div>
+                                            <label class="bg-radio-label">
+                                                <input type="radio" name="bg-selection" id="bg-default-radio"
+                                                    value="default" checked />
+                                                <span class="radio-indicator"></span>
+                                            </label>
+                                        </div>
+
+                                        <!-- Custom Background Preview -->
+                                        <div class="bg-preview-container">
+                                            <div class="bg-preview" id="bg-custom-preview" title="Custom Background">
+                                            </div>
+                                            <label class="bg-radio-label">
+                                                <input type="radio" name="bg-selection" id="bg-custom-radio"
+                                                    value="custom" />
+                                                <span class="radio-indicator"></span>
+                                            </label>
+                                        </div>
+
+                                        <button class="personalization-icon-btn" id="bg-upload-btn" type="button"
+                                            aria-label="Upload background image" title="Upload background image">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                <path
+                                                    d="M14.5 4H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.5">
+                                                </path>
+                                                <path d="m14 10-2-2-2 2"></path>
+                                                <path d="M12 8v8"></path>
+                                                <path d="m3 15 4-4a2 2 0 0 1 2.828 0L14 15"></path>
+                                                <path d="m14 13 1-1a2 2 0 0 1 2.828 0L21 15"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Visibility</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Show Infrared Logo</h3>
+                                    <p>Display the INFRARED title on the home page.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <div class="segmented-control" id="title-mode" role="group"
+                                        aria-label="Home title mode">
+                                        <button class="segmented-control-btn" type="button" data-title-mode="logo"
+                                            aria-pressed="true">Logo</button>
+                                        <button class="segmented-control-btn" type="button" data-title-mode="clock"
+                                            aria-pressed="false">Time</button>
+                                        <button class="segmented-control-btn" type="button" data-title-mode="none"
+                                            aria-pressed="false">None</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Show Navigation Bar</h3>
+                                    <p>Display the tab bar navigation on the home page.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-navbar" checked />
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Show Tips</h3>
+                                    <p>Display rotating tips on the home page.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-tips" checked />
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Enable Animations</h3>
+                                    <p>Replay page reveal animations on switches. Turn this off for an instant UI.</p>
+                                </div>
+                                <div class="settings-row-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-animations" checked />
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-panel" data-settings-panel="about" hidden>
+                    <div class="settings-panel-header" data-animate-item>
+                        <h2>About</h2>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Build</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Infrared Version</h3>
+                                    <p>v0.16 Turbo</p>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Recommended Launcher Version</h3>
+                                    <p>IR v0.10 GSITE</p>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Interstellar Package Version</h3>
+                                    <p>v5.2.5</p>
+                                </div>
+                            </div>
+                            <div class="settings-divider"></div>
+                            <div class="settings-row">
+                                <div class="settings-row-copy">
+                                    <h3>Last Updated</h3>
+                                    <p>April 14, 2026</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <p class="settings-section-label" data-animate-item>Project</p>
+                        <div class="settings-card" data-animate-item>
+                            <div class="settings-row settings-row-stack">
+                                <div class="settings-row-copy">
+                                    <h3>Infrared</h3>
+                                    <p>Infrared is a project by Interstellar, built to stay fast, polished, and add-free
+                                        forever.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
-    <main class="page-shell" aria-label="Infrared page shell">
-        <iframe class="page-frame is-active" data-shell-page="home" title="Home" src="/home" loading="eager"></iframe>
-        <iframe class="page-frame" data-shell-page="games" title="Games" src="/a" loading="eager"></iframe>
-        <iframe class="page-frame" data-shell-page="apps" title="Apps" src="/b" loading="eager"></iframe>
-        <iframe class="page-frame" data-shell-page="tabs" title="Tabs" src="/d" loading="eager"></iframe>
-        <iframe class="page-frame" data-shell-page="settings" title="Settings" src="/c" loading="eager"></iframe>
-    </main>
 
-    <script src="/assets/js/page-shell.js"></script>
+    <script src="/vendor/motion/motion.js"></script>
+    <script src="/assets/js/001.js?v=001"></script>
+    <script src="/assets/js/settings-page.js?v=001"></script>
 </body>
 
 </html>
