@@ -38,6 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
       span.className = "title-char";
       span.setAttribute("aria-hidden", "true");
       span.textContent = character === " " ? "\u00A0" : character;
+      // Title chars default to opacity:0 in CSS; make them visible unless the intro animation resets them.
+      span.style.opacity = "1";
+      span.style.transform = "";
+      span.style.filter = "";
       title.appendChild(span);
       return span;
     });
@@ -62,6 +66,56 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     getChars() {
       return getTitleChars();
+    },
+    updateDiff(nextText) {
+      if (!title) {
+        return [];
+      }
+
+      const currentText = title.getAttribute("aria-label") ?? "";
+      if (typeof nextText !== "string" || !nextText) {
+        return getTitleChars();
+      }
+
+      // If the length changed, rebuild and ensure visibility.
+      if (currentText.length !== nextText.length) {
+        const spans = splitTitleText(nextText);
+        spans.forEach(span => {
+          span.style.opacity = "1";
+          span.style.transform = "";
+          span.style.filter = "";
+        });
+        return spans;
+      }
+
+      const chars = getTitleChars();
+      title.setAttribute("aria-label", nextText);
+
+      chars.forEach((span, idx) => {
+        const nextChar = nextText[idx] ?? "";
+        const prevChar = currentText[idx] ?? "";
+        if (nextChar === prevChar) {
+          return;
+        }
+
+        span.textContent = nextChar === " " ? "\u00A0" : nextChar;
+        span.style.opacity = "1";
+
+        if (!animationsEnabled()) {
+          span.style.transform = "";
+          span.style.filter = "";
+          return;
+        }
+
+        // Quick per-character tick animation for just the changing digits.
+        motion.animate(
+          span,
+          { opacity: [0, 1], y: [14, 0], filter: ["blur(10px)", "blur(0px)"] },
+          { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+        );
+      });
+
+      return chars;
     },
   };
 

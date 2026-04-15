@@ -643,6 +643,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const wallpaper = doc.querySelector('.wallpaper');
       const wallpaperBlur = doc.querySelector('.wallpaper-blur');
       const navbar = doc.querySelector('.navbar');
+      const navbarSurface = navbar?.querySelector?.(".nav-content") || navbar;
+
+      // We don't theme the navbar background; always clear any previous inline styling.
+      if (navbarSurface) {
+        navbarSurface.style.backgroundImage = "";
+        navbarSurface.style.backgroundColor = "";
+        navbarSurface.style.backgroundSize = "";
+        navbarSurface.style.backgroundPosition = "";
+        navbarSurface.style.borderRadius = "";
+        navbarSurface.style.overflow = "";
+      }
       
       if (settings.useDefaultBackground) {
         // Use default background
@@ -654,10 +665,7 @@ document.addEventListener("DOMContentLoaded", () => {
           wallpaperBlur.style.backgroundImage = "url('/assets/media/homebg.png')";
           wallpaperBlur.style.backgroundColor = '';
         }
-        if (navbar) {
-          navbar.style.backgroundImage = '';
-          navbar.style.backgroundColor = '';
-        }
+        // Navbar background is intentionally untouched (cleared above).
       } else if (settings.backgroundImage) {
         // Use custom uploaded image
         if (wallpaper) {
@@ -670,11 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
           wallpaperBlur.style.backgroundSize = 'cover';
           wallpaperBlur.style.backgroundPosition = 'center';
         }
-        if (navbar) {
-          navbar.style.backgroundImage = `url('${settings.backgroundImage}')`;
-          navbar.style.backgroundSize = 'cover';
-          navbar.style.backgroundPosition = 'center';
-        }
+        // Navbar background is intentionally untouched (cleared above).
       } else if (settings.backgroundColor) {
         // Use custom color
         if (wallpaper) {
@@ -685,10 +689,7 @@ document.addEventListener("DOMContentLoaded", () => {
           wallpaperBlur.style.backgroundImage = '';
           wallpaperBlur.style.backgroundColor = settings.backgroundColor;
         }
-        if (navbar) {
-          navbar.style.backgroundImage = '';
-          navbar.style.backgroundColor = settings.backgroundColor;
-        }
+        // Navbar background is intentionally untouched (cleared above).
       }
       
       // Title mode (logo / clock / none)
@@ -706,7 +707,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (hours === 0) hours = 12;
         const hourString = String(hours).padStart(2, "0");
         const nextText = `${hourString}:${minutes}${suffix}`;
-        if (win.InfraredHomeTitle?.setText) {
+        if (win.InfraredHomeTitle?.updateDiff) {
+          win.InfraredHomeTitle.updateDiff(nextText);
+        } else if (win.InfraredHomeTitle?.setText) {
           win.InfraredHomeTitle.setText(nextText);
         } else {
           titleEl.textContent = nextText;
