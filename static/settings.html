@@ -11,6 +11,7 @@
   <title id="t">Settings</title>
   <link rel="stylesheet" id="global" href="/assets/css/global.css?v=6" />
   <link rel="stylesheet" href="/assets/css/settings.css?v=07" />
+  <script src="/assets/js/frame-bridge.js"></script>
 </head>
 
 <body class="settings-body">
@@ -194,13 +195,13 @@
             <h2>Personalization</h2>
           </div>
 
-          <div class="settings-section">
-            <p class="settings-section-label" data-animate-item>Appearance</p>
-            <div class="settings-card" data-animate-item>
-              <div class="settings-row settings-row-stack">
-                <div class="settings-row-copy">
-                  <h3>Background</h3>
-                  <p>Choose your background or upload a custom image.</p>
+            <div class="settings-section">
+              <p class="settings-section-label" data-animate-item>Appearance</p>
+              <div class="settings-card" data-animate-item>
+                <div class="settings-row settings-row-stack">
+                  <div class="settings-row-copy">
+                    <h3>Background</h3>
+                    <p>Choose your background or upload a custom image.</p>
                 </div>
                 <div class="settings-row-control">
                   <div class="personalization-bg-group">
@@ -224,8 +225,16 @@
                       </label>
                     </div>
 
-                    <!-- Upload Button -->
-                    <button class="personalization-btn" id="bg-upload-btn" type="button">+ Upload</button>
+                    <button class="personalization-icon-btn" id="bg-upload-btn" type="button"
+                      aria-label="Upload background image" title="Upload background image">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 4H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.5"></path>
+                        <path d="m14 10-2-2-2 2"></path>
+                        <path d="M12 8v8"></path>
+                        <path d="m3 15 4-4a2 2 0 0 1 2.828 0L14 15"></path>
+                        <path d="m14 13 1-1a2 2 0 0 1 2.828 0L21 15"></path>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -241,10 +250,14 @@
                   <p>Display the INFRARED title on the home page.</p>
                 </div>
                 <div class="settings-row-control">
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-logo" checked />
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <div class="segmented-control" id="title-mode" role="group" aria-label="Home title mode">
+                    <button class="segmented-control-btn" type="button" data-title-mode="logo"
+                      aria-pressed="true">Logo</button>
+                    <button class="segmented-control-btn" type="button" data-title-mode="clock"
+                      aria-pressed="false">Time</button>
+                    <button class="segmented-control-btn" type="button" data-title-mode="none"
+                      aria-pressed="false">None</button>
+                  </div>
                 </div>
               </div>
               <div class="settings-divider"></div>
@@ -269,6 +282,19 @@
                 <div class="settings-row-control">
                   <label class="toggle-switch">
                     <input type="checkbox" id="toggle-tips" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-divider"></div>
+              <div class="settings-row">
+                <div class="settings-row-copy">
+                  <h3>Enable Animations</h3>
+                  <p>Replay page reveal animations on switches. Turn this off for an instant UI.</p>
+                </div>
+                <div class="settings-row-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-animations" checked />
                     <span class="toggle-slider"></span>
                   </label>
                 </div>
@@ -309,7 +335,7 @@
               <div class="settings-row">
                 <div class="settings-row-copy">
                   <h3>Last Updated</h3>
-                  <p>April 11, 2026</p>
+                  <p>April 14, 2026</p>
                 </div>
               </div>
             </div>

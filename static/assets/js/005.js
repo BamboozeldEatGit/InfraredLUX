@@ -20,6 +20,15 @@ try {
 const form = document.getElementById("fv");
 const input = document.getElementById("iv");
 
+function openShellTabs(url, mode = "auto") {
+  if (!window.InfraredShellBridge?.isEmbedded) {
+    return false;
+  }
+
+  window.InfraredShellBridge.openTabsTarget(url, { mode });
+  return true;
+}
+
 if (form && input) {
   form.addEventListener("submit", async event => {
     event.preventDefault();
@@ -42,8 +51,13 @@ function processUrl(value, path) {
     url = `https://${url}`;
   }
 
-  sessionStorage.setItem("GoUrl", __uv$config.encodeUrl(url));
   const dy = localStorage.getItem("dy");
+
+  if (openShellTabs(url, dy === "true" ? "dynamic" : "uv")) {
+    return;
+  }
+
+  sessionStorage.setItem("GoUrl", __uv$config.encodeUrl(url));
 
   if (dy === "true") {
     window.location.href = `/a/q/${__uv$config.encodeUrl(url)}`;

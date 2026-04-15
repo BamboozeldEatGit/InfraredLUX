@@ -87,6 +87,7 @@ app.get("/e/*", async (req, res, nextMiddleware) => {
 
 
 const staticRoutes = [
+  { path: "/home", file: "home.html" },
   { path: "/b", file: "apps.html" },
   { path: "/a", file: "games.html" },
   { path: "/play.html", file: "games.html" },

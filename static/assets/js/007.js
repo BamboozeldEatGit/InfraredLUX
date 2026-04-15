@@ -26,6 +26,120 @@ function trackSearch(url) {
   setCookie("searchHistory", JSON.stringify(history));
 }
 
+function tabsBuildSearchUrl(query) {
+  const searchBase = localStorage.getItem("engine") || "https://duckduckgo.com/?q=";
+  return `${searchBase}${encodeURIComponent(query)}`;
+}
+
+function tabsIsUrl(val = "") {
+  if (
+    /^http(s?):\/\//.test(val) ||
+    (val.includes(".") && val.substr(0, 1) !== " ")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function tabsPrependHttps(url) {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
+function tabsResolveDisplayValue(target, mode = "auto") {
+  const rawTarget = `${target ?? ""}`.trim();
+
+  if (!rawTarget) {
+    return "";
+  }
+
+  if (
+    mode === "direct" ||
+    rawTarget.startsWith("/") ||
+    rawTarget.startsWith("./") ||
+    rawTarget.startsWith("../") ||
+    rawTarget === "search-start.html"
+  ) {
+    return rawTarget;
+  }
+
+  return tabsIsUrl(rawTarget) ? tabsPrependHttps(rawTarget) : tabsBuildSearchUrl(rawTarget);
+}
+
+function tabsResolveFrameSrc(target, mode = "auto") {
+  const rawTarget = `${target ?? ""}`.trim();
+
+  if (!rawTarget) {
+    return "search-start.html";
+  }
+
+  const isDirectTarget =
+    rawTarget.startsWith("/") ||
+    rawTarget.startsWith("./") ||
+    rawTarget.startsWith("../") ||
+    rawTarget === "search-start.html";
+
+  let resolvedMode = mode;
+
+  if (resolvedMode === "auto") {
+    resolvedMode = isDirectTarget ? "direct" : (localStorage.getItem("dy") === "true" ? "dynamic" : "uv");
+  }
+
+  if (resolvedMode === "direct" || isDirectTarget) {
+    return new URL(rawTarget, window.location.origin).href;
+  }
+
+  if (typeof __uv$config === "undefined") {
+    throw new Error("__uv$config not available");
+  }
+
+  const preparedTarget = tabsResolveDisplayValue(rawTarget, resolvedMode);
+  const encodedTarget = __uv$config.encodeUrl(preparedTarget);
+
+  return resolvedMode === "dynamic" ? `/a/q/${encodedTarget}` : `/a/${encodedTarget}`;
+}
+
+function tabsOpenTarget(target, mode = "auto") {
+  const iframeContainer = document.getElementById("frame-container");
+  const urlInput = document.getElementById("iv");
+
+  if (!iframeContainer) {
+    return false;
+  }
+
+  const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
+    iframe => iframe.classList.contains("active"),
+  );
+
+  if (!activeIframe) {
+    return false;
+  }
+
+  try {
+    const displayValue = tabsResolveDisplayValue(target, mode);
+    const frameSrc = tabsResolveFrameSrc(target, mode);
+
+    if (/^http(s?):\/\//.test(displayValue)) {
+      const domain = displayValue.replace(/https?:\/\//i, "").split("/")[0];
+      trackSearch(domain);
+    }
+
+    activeIframe.src = frameSrc.startsWith("http") ? frameSrc : `${window.location.origin}${frameSrc}`;
+    activeIframe.dataset.tabUrl = displayValue || target;
+
+    if (urlInput) {
+      urlInput.value = displayValue || target;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error opening target in tabs:", error);
+    return false;
+  }
+}
+
 window.addEventListener("load", () => {
   // Wait for config to be available before registering service worker
   const waitForConfig = setInterval(() => {
@@ -44,8 +158,7 @@ window.addEventListener("load", () => {
   const form = document.getElementById("fv");
   const input = document.getElementById("iv");
   function buildSearchUrl(query) {
-    const searchBase = localStorage.getItem("engine") || "https://duckduckgo.com/?q=";
-    return `${searchBase}${encodeURIComponent(query)}`;
+    return tabsBuildSearchUrl(query);
   }
 
   if (input) {
@@ -74,47 +187,13 @@ window.addEventListener("load", () => {
     }
   }
   function processUrl(url) {
-    if (typeof __uv$config === 'undefined') {
-      console.error('__uv$config not available');
-      return;
-    }
-    try {
-      // Track the search/visit
-      const isUrl = /^http(s?):\/\//.test(url);
-      if (isUrl) {
-        const domain = url.replace(/https?:\/\//i, "").split("/")[0];
-        trackSearch(domain);
-      }
-      
-      const encodedUrl = __uv$config.encodeUrl(url);
-      sessionStorage.setItem("GoUrl", encodedUrl);
-      const iframeContainer = document.getElementById("frame-container");
-      const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
-        iframe => iframe.classList.contains("active"),
-      );
-      activeIframe.src = `/a/${encodedUrl}`;
-      activeIframe.dataset.tabUrl = url;
-      input.value = url;
-      console.log("Original URL:", url);
-      console.log("Encoded URL:", encodedUrl);
-    } catch (error) {
-      console.error("Error encoding URL:", error);
-    }
+    tabsOpenTarget(url, "auto");
   }
   function isUrl(val = "") {
-    if (
-      /^http(s?):\/\//.test(val) ||
-      (val.includes(".") && val.substr(0, 1) !== " ")
-    ) {
-      return true;
-    }
-    return false;
+    return tabsIsUrl(val);
   }
   function prependHttps(url) {
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      return `https://${url}`;
-    }
-    return url;
+    return tabsPrependHttps(url);
   }
 
   // Check if there's a URL to open from home page command box
@@ -284,24 +363,73 @@ document.addEventListener("DOMContentLoaded", event => {
         return null;
       };
       
-      // Inject script to listen for Ctrl+K inside iframe
-      try {
-        const iframeDoc = newIframe.contentDocument || newIframe.contentWindow.document;
-        if (iframeDoc) {
-          const script = iframeDoc.createElement("script");
-          script.textContent = `
-            document.addEventListener("keydown", (e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-                e.preventDefault();
-                window.parent.postMessage({ type: "openCommandBox" }, "*");
-              }
-            }, true);
-          `;
-          iframeDoc.head.appendChild(script);
-        }
-      } catch (error) {
-        // Silently fail for cross-origin iframes
-      }
+       // Inject script to listen for Ctrl+K inside iframe
+       try {
+         const iframeDoc = newIframe.contentDocument || newIframe.contentWindow.document;
+         if (iframeDoc) {
+           const script = iframeDoc.createElement("script");
+            script.textContent = `
+              document.addEventListener("keydown", (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+                  e.preventDefault();
+                  window.parent.postMessage({ type: "openCommandBox" }, "*");
+                }
+              }, true);
+
+              // Replace blocking native alerts with a toast in the Tabs parent.
+              (function () {
+                try {
+                  const nativeAlert = window.alert;
+                  const nativeConfirm = window.confirm;
+                  const nativePrompt = window.prompt;
+                  window.alert = function (message) {
+                    try {
+                      window.parent.postMessage(
+                        { type: "infrared-tabs:alert", message: String(message ?? "") },
+                        "*"
+                      );
+                    } catch (e) {
+                      nativeAlert(message);
+                    }
+                  };
+
+                  window.confirm = function (message) {
+                    try {
+                      window.parent.postMessage(
+                        { type: "infrared-tabs:confirm", message: String(message ?? "") },
+                        "*"
+                      );
+                      return false;
+                    } catch (e) {
+                      return nativeConfirm(message);
+                    }
+                  };
+
+                  window.prompt = function (message, defaultValue) {
+                    try {
+                      window.parent.postMessage(
+                        {
+                          type: "infrared-tabs:prompt",
+                          message: String(message ?? ""),
+                          defaultValue: defaultValue === undefined ? "" : String(defaultValue),
+                        },
+                        "*"
+                      );
+                      return null;
+                    } catch (e) {
+                      return nativePrompt(message, defaultValue);
+                    }
+                  };
+                } catch (e) {
+                  // ignore
+                }
+              })();
+            `;
+           iframeDoc.head.appendChild(script);
+         }
+       } catch (error) {
+         // Silently fail for cross-origin iframes
+       }
       
       if (newIframe.contentDocument.documentElement.outerHTML.trim().length > 0) {
         Load();
@@ -633,8 +761,8 @@ document.addEventListener("DOMContentLoaded", event => {
       
       div.addEventListener("click", () => {
         if (suggestion.isMenuItem) {
-          sessionStorage.setItem("urlToOpen", suggestion.url);
-          window.location.href = "/d";
+          tabsOpenTarget(suggestion.url, "auto");
+          closeCommandBox();
         } else {
           navigateToSuggestion(suggestion);
         }
@@ -760,9 +888,156 @@ document.addEventListener("DOMContentLoaded", event => {
   window.addEventListener("message", (event) => {
     if (event.data && event.data.type === "openCommandBox") {
       openCommandBox();
+      return;
+    }
+
+    if (event.data && event.data.type === "infrared-tabs:alert") {
+      const message = typeof event.data.message === "string" ? event.data.message : String(event.data.message ?? "");
+      showTabsToast(message);
+      return;
+    }
+
+    if (event.data && event.data.type === "infrared-tabs:confirm") {
+      showTabsToast("Confirm not supported");
+      return;
+    }
+
+    if (event.data && event.data.type === "infrared-tabs:prompt") {
+      showTabsToast("Prompt not supported");
+      return;
+    }
+
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+
+    if (event.data && event.data.type === "infrared-shell:open-tab-target") {
+      tabsOpenTarget(event.data.target, event.data.mode || "auto");
     }
   });
 });
+
+function showTabsToast(message) {
+  const text = (message || "").trim();
+  if (!text) {
+    return;
+  }
+
+  const { host, stack, dim, glow } = ensureToastHost();
+  dim.classList.add("is-visible");
+  glow.classList.add("is-visible");
+
+  const item = document.createElement("div");
+  item.className = "tabs-toast-inner";
+  item.setAttribute("role", "status");
+  item.setAttribute("aria-live", "polite");
+
+  const toastText = document.createElement("div");
+  toastText.className = "tabs-toast-text";
+  toastText.textContent = text;
+
+  const toastAction = document.createElement("button");
+  toastAction.type = "button";
+  toastAction.className = "tabs-toast-action";
+  toastAction.title = "Copy message";
+  toastAction.setAttribute("aria-label", "Copy message");
+  toastAction.innerHTML = `<i data-lucide="copy"></i>`;
+
+  toastAction.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(toastText.textContent || "");
+      showTabsToast("Copied to clipboard");
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  item.appendChild(toastText);
+  item.appendChild(toastAction);
+  stack.appendChild(item);
+  host.classList.add("is-visible");
+
+  // Cap stack so it doesn't grow forever.
+  const items = Array.from(stack.querySelectorAll(".tabs-toast-inner"));
+  if (items.length > 4) {
+    for (const extra of items.slice(0, items.length - 4)) {
+      extra.remove();
+    }
+  }
+
+  // Trigger fade-in for the new item (next frame so transition applies).
+  requestAnimationFrame(() => {
+    window.lucide?.createIcons?.();
+    item.style.opacity = "1";
+    item.style.transform = "translateY(0)";
+  });
+
+  // Auto-remove this toast.
+  const hideTimer = setTimeout(() => {
+    item.classList.remove("is-visible");
+    item.style.opacity = "0";
+    item.style.transform = "translateY(8px)";
+    setTimeout(() => {
+      item.remove();
+      cleanupToastHostIfEmpty();
+    }, 220);
+  }, 2600);
+
+  // Store so we can cancel if needed later (not currently used).
+  item._infraredTimer = hideTimer;
+}
+
+function ensureToastHost() {
+  let host = document.getElementById("infrared-tabs-toast");
+  let dim = document.getElementById("infrared-tabs-toast-dim");
+  let glow = document.getElementById("infrared-tabs-toast-glow");
+
+  if (!dim) {
+    dim = document.createElement("div");
+    dim.id = "infrared-tabs-toast-dim";
+    dim.className = "tabs-toast-dim";
+    document.body.appendChild(dim);
+  }
+
+  if (!glow) {
+    glow = document.createElement("div");
+    glow.id = "infrared-tabs-toast-glow";
+    glow.className = "tabs-toast-glow";
+    document.body.appendChild(glow);
+  }
+
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "infrared-tabs-toast";
+    host.className = "tabs-toast";
+
+    const stack = document.createElement("div");
+    stack.className = "tabs-toast-stack";
+    host.appendChild(stack);
+    document.body.appendChild(host);
+  }
+
+  const stack = host.querySelector(".tabs-toast-stack");
+  return { host, stack, dim, glow };
+}
+
+function cleanupToastHostIfEmpty() {
+  const host = document.getElementById("infrared-tabs-toast");
+  const dim = document.getElementById("infrared-tabs-toast-dim");
+  const glow = document.getElementById("infrared-tabs-toast-glow");
+  const stack = host?.querySelector(".tabs-toast-stack");
+  const hasItems = !!stack?.querySelector(".tabs-toast-inner");
+
+  if (!hasItems) {
+    host?.classList.remove("is-visible");
+    if (dim) {
+      dim.classList.remove("is-visible");
+    }
+    if (glow) {
+      glow.classList.remove("is-visible");
+    }
+  }
+}
 
 // Reload
 function reload() {
@@ -861,9 +1136,11 @@ const fullscreenButton = document.getElementById("fullscreen-button");
 fullscreenButton.addEventListener("click", FS);
 // Home
 function Home() {
-  window.location.href = "./";
+  if (!window.InfraredShellBridge?.navigate("home")) {
+    window.location.href = "/";
+  }
 }
-const homeButton = document.getElementById("home-page");
+const homeButton = document.getElementById("back-home-button") || document.getElementById("home-page");
 if (homeButton) {
   homeButton.addEventListener("click", Home);
 }

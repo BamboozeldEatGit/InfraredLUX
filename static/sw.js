@@ -21,7 +21,15 @@ self.addEventListener("fetch", event => {
         return await uv.fetch(event);
       }
 
-      return await fetch(event.request);
+        // If the request is for an external URL, proxy it through the UV service worker
+        // to avoid the 404 Bare meta error. This mirrors the behavior used for internal
+        // routes (the `/a/` prefix) and ensures third‑party sites are fetched correctly.
+        const url = new URL(event.request.url);
+        if (url.origin !== location.origin) {
+          // Use the UV service worker instance to fetch external resources
+          return await uv.fetch(event);
+        }
+        return await fetch(event.request);
     })(),
   );
 });

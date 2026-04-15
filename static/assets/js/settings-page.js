@@ -14,6 +14,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportButton = document.getElementById("export-save");
   const importButton = document.getElementById("import-save");
 
+  function getAnimationPreference() {
+    try {
+      const stored = localStorage.getItem("infraredPersonalization");
+      if (!stored) {
+        return true;
+      }
+
+      return JSON.parse(stored).enableAnimations !== false;
+    } catch (error) {
+      return true;
+    }
+  }
+
   // Search functionality
   function searchSettings(query) {
     const lowerQuery = query.toLowerCase();
@@ -74,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function animateTargets(targets, keyframes, options) {
-    if (!motion?.animate || prefersReducedMotion || !targets.length) {
+    if (!motion?.animate || prefersReducedMotion || !getAnimationPreference() || !targets.length) {
       return null;
     }
 
@@ -86,9 +99,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function animatePageIn() {
+    if (!getAnimationPreference()) {
+      return;
+    }
+
     const sidebarTargets = Array.from(document.querySelectorAll(".settings-topbar, .settings-sidebar"));
     const activePanel = document.querySelector(".settings-panel.is-active");
     const panelTargets = activePanel ? getPanelItems(activePanel) : [];
+
+    [...sidebarTargets, ...panelTargets].forEach(target => {
+      target.style.opacity = "0";
+      target.style.transform = "";
+      target.style.filter = "blur(8px)";
+    });
 
     animateTargets(
       sidebarTargets,
@@ -126,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTabState(panelId);
 
-    if (!motion?.animate || prefersReducedMotion || immediate || !currentPanel) {
+    if (!motion?.animate || prefersReducedMotion || !getAnimationPreference() || immediate || !currentPanel) {
       currentPanel?.classList.remove("is-active");
       if (currentPanel) {
         currentPanel.hidden = true;
@@ -539,14 +562,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getPersonalizationSettings() {
     const stored = localStorage.getItem(PERSONALIZATION_KEY);
-    return stored ? JSON.parse(stored) : {
+    const parsed = stored ? JSON.parse(stored) : null;
+    const base = parsed || {
       backgroundImage: null,
       backgroundColor: "#1a1a1a",
       useDefaultBackground: true,
-      showLogo: true,
+      titleMode: "logo",
       showNavbar: true,
-      showTips: true
+      showTips: true,
+      enableAnimations: true
     };
+
+    // Backwards-compat: previously stored `showLogo` boolean.
+    if (!base.titleMode && typeof base.showLogo === "boolean") {
+      base.titleMode = base.showLogo ? "logo" : "none";
+    }
+    delete base.showLogo;
+
+    if (base.titleMode !== "logo" && base.titleMode !== "clock" && base.titleMode !== "none") {
+      base.titleMode = "logo";
+    }
+
+    return base;
   }
 
   function savePersonalizationSettings(settings) {
@@ -600,6 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyPersonalizationToWindow(win, settings) {
     try {
       const doc = win.document;
+      const root = doc.documentElement;
       
       // Apply background to wallpaper, blur, and navbar
       const wallpaper = doc.querySelector('.wallpaper');
@@ -653,10 +691,53 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
       
-      // Toggle logo
-      const logo = doc.querySelector('.title');
-      if (logo) {
-        logo.style.display = settings.showLogo ? 'block' : 'none';
+      // Title mode (logo / clock / none)
+      const titleEl = doc.querySelector('.title');
+      const subtitle = doc.querySelector('.subtitle, #dynamic-subtitle');
+      const titleMode = settings.titleMode || "logo";
+      const clockKey = "__infraredClockInterval";
+      const applyClock = () => {
+        if (!titleEl) return;
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const suffix = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        if (hours === 0) hours = 12;
+        const hourString = String(hours).padStart(2, "0");
+        const nextText = `${hourString}:${minutes}${suffix}`;
+        if (win.InfraredHomeTitle?.setText) {
+          win.InfraredHomeTitle.setText(nextText);
+        } else {
+          titleEl.textContent = nextText;
+        }
+      };
+
+      if (titleEl) {
+        if (titleMode === "none") {
+          titleEl.style.display = "none";
+          if (win[clockKey]) {
+            win.clearInterval(win[clockKey]);
+            win[clockKey] = null;
+          }
+        } else if (titleMode === "clock") {
+          titleEl.style.display = "block";
+          applyClock();
+          if (!win[clockKey]) {
+            win[clockKey] = win.setInterval(applyClock, 1000 * 15);
+          }
+        } else {
+          titleEl.style.display = "block";
+          if (win.InfraredHomeTitle?.setText) {
+            win.InfraredHomeTitle.setText("INFRARED");
+          } else {
+            titleEl.textContent = "INFRARED";
+          }
+          if (win[clockKey]) {
+            win.clearInterval(win[clockKey]);
+            win[clockKey] = null;
+          }
+        }
       }
       
       // Toggle navbar
@@ -665,10 +746,35 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       // Toggle tips
-      const subtitle = doc.querySelector('.subtitle, #dynamic-subtitle');
       if (subtitle) {
         subtitle.style.display = settings.showTips ? 'block' : 'none';
       }
+
+      if (root) {
+        root.classList.toggle("animations-disabled", settings.enableAnimations === false);
+      }
+
+      let animationStyle = doc.getElementById("infrared-animation-style");
+        if (!animationStyle) {
+          animationStyle = doc.createElement("style");
+          animationStyle.id = "infrared-animation-style";
+          animationStyle.textContent = `
+            html.animations-disabled *,
+            html.animations-disabled *::before,
+            html.animations-disabled *::after {
+              animation: none !important;
+              transition: none !important;
+              scroll-behavior: auto !important;
+            }
+
+            /* Some pages start with opacity: 0 and rely on animations to fade in. */
+            html.animations-disabled body {
+              opacity: 1 !important;
+              animation: none !important;
+            }
+          `;
+          doc.head?.appendChild(animationStyle);
+        }
     } catch (e) {
       console.error('Error applying personalization:', e);
     }
@@ -678,9 +784,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const settings = getPersonalizationSettings();
     
     // Update UI to reflect stored settings
-    const logoToggle = document.getElementById('toggle-logo');
+    const titleModeGroup = document.getElementById("title-mode");
+    const titleModeButtons = titleModeGroup ? Array.from(titleModeGroup.querySelectorAll("[data-title-mode]")) : [];
     const navbarToggle = document.getElementById('toggle-navbar');
     const tipsToggle = document.getElementById('toggle-tips');
+    const animationsToggle = document.getElementById('toggle-animations');
     const bgUploadBtn = document.getElementById('bg-upload-btn');
     const bgImageInput = document.getElementById('bg-image-input');
     const bgDefaultRadio = document.getElementById('bg-default-radio');
@@ -688,9 +796,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const bgDefaultPreview = document.getElementById('bg-default-preview');
     const bgCustomPreview = document.getElementById('bg-custom-preview');
     
-    if (logoToggle) logoToggle.checked = settings.showLogo;
     if (navbarToggle) navbarToggle.checked = settings.showNavbar;
     if (tipsToggle) tipsToggle.checked = settings.showTips;
+    if (animationsToggle) animationsToggle.checked = settings.enableAnimations !== false;
     
     // Set radio button based on settings
     if (settings.useDefaultBackground) {
@@ -725,10 +833,22 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePreviews();
     
     // Event listeners
-    if (logoToggle) {
-      logoToggle.addEventListener('change', (e) => {
-        settings.showLogo = e.target.checked;
-        savePersonalizationSettings(settings);
+    const syncTitleModeUI = () => {
+      const current = settings.titleMode || "logo";
+      titleModeButtons.forEach(btn => {
+        const isActive = btn.dataset.titleMode === current;
+        btn.setAttribute("aria-pressed", String(isActive));
+      });
+    };
+
+    if (titleModeButtons.length) {
+      syncTitleModeUI();
+      titleModeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          settings.titleMode = btn.dataset.titleMode || "logo";
+          syncTitleModeUI();
+          savePersonalizationSettings(settings);
+        });
       });
     }
     
@@ -745,7 +865,14 @@ document.addEventListener("DOMContentLoaded", () => {
         savePersonalizationSettings(settings);
       });
     }
-    
+
+    if (animationsToggle) {
+      animationsToggle.addEventListener('change', (e) => {
+        settings.enableAnimations = e.target.checked;
+        savePersonalizationSettings(settings);
+      });
+    }
+
     if (bgUploadBtn) {
       bgUploadBtn.addEventListener('click', () => {
         bgImageInput?.click();
@@ -820,8 +947,19 @@ document.addEventListener("DOMContentLoaded", () => {
   initPersonalization();
   showPanel("general", true);
   
-  // Delay animation to allow DOM to render initial state
-  requestAnimationFrame(() => {
-    animatePageIn();
-  });
+  const runInitialAnimation = () => {
+    requestAnimationFrame(() => {
+      animatePageIn();
+    });
+  };
+
+  if (!window.InfraredShellBridge?.isEmbedded || window.InfraredShellBridge?.isActive()) {
+    runInitialAnimation();
+  }
+
+  if (window.InfraredShellBridge?.isEmbedded) {
+    window.addEventListener("infrared:shell-activate", () => {
+      runInitialAnimation();
+    });
+  }
 });

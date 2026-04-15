@@ -1,3 +1,39 @@
+# Latest Changes (2026-04-14 / 2026-04-15)
+
+## Settings: Removed Accent Color Feature
+- Removed the Accent Color picker UI from `static/settings.html`.
+- Removed Accent picker styles from `static/assets/css/settings.css`.
+- Removed accent color persistence/apply logic from `static/assets/js/settings-page.js`.
+- Removed accent color application from `static/home.html`, `static/tabs.html`, and `static/assets/js/page-shell.js`.
+
+## Settings: Home Title Mode (Logo / Time / None)
+- Replaced the old "Show Infrared Logo" toggle with a segmented tab slider (Logo / Time / None) in `static/settings.html`.
+- Persisted preference as `infraredPersonalization.titleMode` with backwards-compat migration from `showLogo` in `static/assets/js/settings-page.js`.
+- Applied title mode on the home page, including a live clock mode (updates every ~15s) in `static/home.html` and also when settings are applied to windows/iframes via `static/assets/js/settings-page.js`.
+
+## Home: Clock Formatting + Stagger Support
+- Clock text is now formatted without the AM/PM space and in `HH:MMAM` / `HH:MMPM` format.
+- Added `window.InfraredHomeTitle.setText()` helper in `static/assets/js/home-motion.js` so the title can be rebuilt as `.title-char` spans for stagger animations.
+- Updated home clock/title updates to use `InfraredHomeTitle.setText()` when available.
+
+## Animations Disabled: Prevent Blank Page
+- Fix for turning off animations making pages look like they don't load (body stayed `opacity: 0` because fade-in animation was disabled).
+- Added an override for `html.animations-disabled body { opacity: 1; animation: none; }` in `static/assets/js/settings-page.js` and `static/home.html`.
+
+## Tabs: iframe alert()/confirm()/prompt() -> Toast + UX Effects
+- In Tabs, injected code into same-origin iframes to replace blocking native dialogs:
+  - `alert()` posts a message to Tabs to show a toast.
+  - `confirm()`/`prompt()` are replaced with a toast saying not supported and return `false`/`null`.
+- Toast notifications now:
+  - Stack (up to 4 visible).
+  - Include a Lucide "copy" action button.
+  - Use site styling + accent blue for the action button.
+  - Dim + blur the screen behind the toast while active.
+  - Show a bottom-right accent-blue glow with a breathing animation while active.
+- Implemented in `static/assets/js/007.js` and styled in `static/assets/css/t.css`.
+
+---
+
 # Keyboard Diagram Fixes
 
 ## Issue

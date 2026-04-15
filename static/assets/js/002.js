@@ -28,6 +28,15 @@ function saveToLocal(path) {
   sessionStorage.setItem("GoUrl", path);
 }
 
+function openInShellTabs(target, mode = "auto") {
+  if (!window.InfraredShellBridge?.isEmbedded) {
+    return false;
+  }
+
+  window.InfraredShellBridge.openTabsTarget(target, { mode });
+  return true;
+}
+
 function handleClick(app) {
   if (typeof app.say !== "undefined") {
     alert(app.say);
@@ -39,6 +48,25 @@ function handleClick(app) {
     if (!Selected) {
       return false;
     }
+  }
+
+  if (!Selected && !app.custom) {
+    return false;
+  }
+
+  if (!app.custom && window.InfraredShellBridge?.isEmbedded) {
+    if (app.local || app.local2) {
+      openInShellTabs(Selected, "direct");
+      return false;
+    }
+
+    if (app.dy) {
+      openInShellTabs(Selected, "dynamic");
+      return false;
+    }
+
+    openInShellTabs(Selected, "auto");
+    return false;
   }
 
   if (app.local) {

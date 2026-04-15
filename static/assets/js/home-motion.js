@@ -2,22 +2,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const motion = window.Motion;
   const subtitle = document.getElementById("dynamic-subtitle");
   const title = document.querySelector(".main > .title");
+  const shouldDelayIntro = window.InfraredShellBridge?.isEmbedded;
 
   if (!motion?.animate || !motion?.stagger) {
     return;
   }
 
+  function animationsEnabled() {
+    try {
+      const stored = localStorage.getItem("infraredPersonalization");
+      if (!stored) {
+        return true;
+      }
+
+      return JSON.parse(stored).enableAnimations !== false;
+    } catch (error) {
+      return true;
+    }
+  }
+
   const navItems = Array.from(document.querySelectorAll(".nav-item"));
   const heroItems = Array.from(document.querySelectorAll(".main > .subtitle"));
-  let titleChars = [];
 
-  if (title) {
-    const titleText = title.textContent ?? "";
+  function splitTitleText(nextText) {
+    if (!title) {
+      return [];
+    }
 
+    const titleText = typeof nextText === "string" ? nextText : (title.textContent ?? "");
     title.setAttribute("aria-label", titleText);
     title.innerHTML = "";
 
-    titleChars = Array.from(titleText).map(character => {
+    const spans = Array.from(titleText).map(character => {
       const span = document.createElement("span");
       span.className = "title-char";
       span.setAttribute("aria-hidden", "true");
@@ -25,58 +41,131 @@ document.addEventListener("DOMContentLoaded", () => {
       title.appendChild(span);
       return span;
     });
+
+    return spans;
   }
 
-  if (navItems.length) {
-    motion.animate(
-      navItems,
-      {
-        opacity: [0, 1],
-        y: [-14, 0],
-        filter: ["blur(8px)", "blur(0px)"],
-      },
-      {
-        delay: motion.stagger(0.06, { startDelay: 0.08 }),
-        duration: 0.42,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    );
+  function getTitleChars() {
+    if (!title) {
+      return [];
+    }
+    return Array.from(title.querySelectorAll(".title-char"));
   }
 
-  if (titleChars.length) {
-    motion.animate(
-      titleChars,
-      {
-        opacity: [0, 1],
-        y: [28, 0],
-        filter: ["blur(12px)", "blur(0px)"],
-      },
-      {
-        delay: motion.stagger(0.06, { startDelay: 0.18 }),
-        duration: 0.54,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    );
+  // Split whatever is in the title on first load.
+  splitTitleText();
+
+  // Allow other scripts (settings/personalization) to update the title while keeping stagger animation.
+  window.InfraredHomeTitle = {
+    setText(text) {
+      return splitTitleText(text);
+    },
+    getChars() {
+      return getTitleChars();
+    },
+  };
+
+  function resetIntroState() {
+    navItems.forEach(item => {
+      item.style.opacity = "0";
+      item.style.transform = "translateY(-14px)";
+      item.style.filter = "blur(8px)";
+    });
+
+    getTitleChars().forEach(item => {
+      item.style.opacity = "0";
+      item.style.transform = "translateY(28px)";
+      item.style.filter = "blur(12px)";
+    });
+
+    heroItems.forEach(item => {
+      item.style.opacity = "0";
+      item.style.transform = "translateY(22px)";
+      item.style.filter = "blur(12px)";
+    });
   }
 
-  if (heroItems.length) {
-    motion.animate(
-      heroItems,
-      {
-        opacity: [0, 1],
-        y: [22, 0],
-        filter: ["blur(12px)", "blur(0px)"],
-      },
-      {
-        delay: motion.stagger(0.1, { startDelay: titleChars.length ? 0.62 : 0.16 }),
-        duration: 0.62,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    );
-  }
+  const runIntro = () => {
+    if (!animationsEnabled()) {
+      navItems.forEach(item => {
+        item.style.opacity = "1";
+        item.style.transform = "";
+        item.style.filter = "";
+      });
+      getTitleChars().forEach(item => {
+        item.style.opacity = "1";
+        item.style.transform = "";
+        item.style.filter = "";
+      });
+      heroItems.forEach(item => {
+        item.style.opacity = "1";
+        item.style.transform = "";
+        item.style.filter = "";
+      });
+      return;
+    }
+
+    resetIntroState();
+
+    if (navItems.length) {
+      motion.animate(
+        navItems,
+        {
+          opacity: [0, 1],
+          y: [-14, 0],
+          filter: ["blur(8px)", "blur(0px)"],
+        },
+        {
+          delay: motion.stagger(0.06, { startDelay: 0.08 }),
+          duration: 0.42,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      );
+    }
+
+    const titleChars = getTitleChars();
+    if (titleChars.length) {
+      motion.animate(
+        titleChars,
+        {
+          opacity: [0, 1],
+          y: [28, 0],
+          filter: ["blur(12px)", "blur(0px)"],
+        },
+        {
+          delay: motion.stagger(0.06, { startDelay: 0.18 }),
+          duration: 0.54,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      );
+    }
+
+    if (heroItems.length) {
+      motion.animate(
+        heroItems,
+        {
+          opacity: [0, 1],
+          y: [22, 0],
+          filter: ["blur(12px)", "blur(0px)"],
+        },
+        {
+          delay: motion.stagger(0.1, { startDelay: titleChars.length ? 0.62 : 0.16 }),
+          duration: 0.62,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      );
+    }
+  };
 
   window.animateHomeTipReveal = (isInitial = false) => {
     if (!subtitle) {
+      return;
+    }
+
+    if (!animationsEnabled()) {
+      subtitle.style.opacity = "1";
+      subtitle.style.transform = "";
+      subtitle.style.filter = "";
       return;
     }
 
@@ -100,6 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    if (!animationsEnabled()) {
+      callback?.();
+      return;
+    }
+
     motion.animate(
       subtitle,
       {
@@ -117,4 +211,14 @@ document.addEventListener("DOMContentLoaded", () => {
       callback?.();
     }, 240);
   };
+
+  if (!shouldDelayIntro || window.InfraredShellBridge?.isActive()) {
+    runIntro();
+  }
+
+  if (shouldDelayIntro) {
+    window.addEventListener("infrared:shell-activate", () => {
+      runIntro();
+    });
+  }
 });
