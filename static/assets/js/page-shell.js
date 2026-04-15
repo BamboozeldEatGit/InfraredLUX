@@ -24,39 +24,6 @@
   const loadedPages = new Set();
   const activatedPages = new Set();
 
-  const preloader = document.getElementById("page-preloader");
-  const preloaderBarline = document.getElementById("page-preloader-barline");
-
-  function updatePreloader() {
-    if (!preloader) {
-      return;
-    }
-
-    const total = Math.max(pageFrames.size, 1);
-    const loaded = loadedPages.size;
-    const width = 20;
-    const filled = Math.max(0, Math.min(width, Math.round((loaded / total) * width)));
-    if (preloaderBarline) {
-      preloaderBarline.textContent = `[${"#".repeat(filled)}${".".repeat(width - filled)}]`;
-    }
-
-    if (loaded >= total) {
-      preloader.classList.add("is-hidden");
-      preloader.setAttribute("aria-hidden", "true");
-    } else {
-      preloader.classList.remove("is-hidden");
-      preloader.setAttribute("aria-hidden", "false");
-    }
-  }
-
-  // Safety: don't block forever if a frame never loads.
-  window.setTimeout(() => {
-    if (loadedPages.size < pageFrames.size) {
-      preloader?.classList.add("is-hidden");
-      preloader?.setAttribute("aria-hidden", "true");
-    }
-  }, 8000);
-
   let activePageId = null;
   let pendingTabsTarget = null;
 
@@ -190,7 +157,6 @@
   pageFrames.forEach((frame, pageId) => {
     frame.addEventListener("load", () => {
       loadedPages.add(pageId);
-      updatePreloader();
 
       const pendingActivation = frame.dataset.pendingActivation;
 
@@ -213,8 +179,6 @@
       }
     });
   });
-
-  updatePreloader();
 
   window.addEventListener("message", event => {
     if (event.origin !== origin) {
