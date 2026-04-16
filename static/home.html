@@ -177,6 +177,17 @@
             const wallpaper = document.querySelector('.wallpaper');
             const wallpaperBlur = document.querySelector('.wallpaper-blur');
             const navbar = document.querySelector('.navbar');
+            const navbarSurface = navbar?.querySelector?.(".nav-content") || navbar;
+
+            // We don't theme the navbar background; always clear any previous inline styling.
+            if (navbarSurface) {
+                navbarSurface.style.backgroundImage = "";
+                navbarSurface.style.backgroundColor = "";
+                navbarSurface.style.backgroundSize = "";
+                navbarSurface.style.backgroundPosition = "";
+                navbarSurface.style.borderRadius = "";
+                navbarSurface.style.overflow = "";
+            }
 
             if (settings.useDefaultBackground) {
                 // Use default background
@@ -189,8 +200,7 @@
                     wallpaperBlur.style.backgroundColor = '';
                 }
                 if (navbar) {
-                    navbar.style.backgroundImage = '';
-                    navbar.style.backgroundColor = '';
+                    // Navbar background is intentionally untouched (cleared above).
                 }
             } else if (settings.backgroundImage) {
                 // Use custom image
@@ -205,9 +215,7 @@
                     wallpaperBlur.style.backgroundPosition = 'center';
                 }
                 if (navbar) {
-                    navbar.style.backgroundImage = `url('${settings.backgroundImage}')`;
-                    navbar.style.backgroundSize = 'cover';
-                    navbar.style.backgroundPosition = 'center';
+                    // Navbar background is intentionally untouched (cleared above).
                 }
             } else if (settings.backgroundColor) {
                 // Use custom color
@@ -220,8 +228,7 @@
                     wallpaperBlur.style.backgroundColor = settings.backgroundColor;
                 }
                 if (navbar) {
-                    navbar.style.backgroundImage = '';
-                    navbar.style.backgroundColor = settings.backgroundColor;
+                    // Navbar background is intentionally untouched (cleared above).
                 }
             }
 
@@ -243,7 +250,9 @@
                 if (hours === 0) hours = 12;
                 const hourString = String(hours).padStart(2, "0");
                 const nextText = `${hourString}:${minutes}${suffix}`;
-                if (window.InfraredHomeTitle?.setText) {
+                if (window.InfraredHomeTitle?.updateDiff) {
+                    window.InfraredHomeTitle.updateDiff(nextText);
+                } else if (window.InfraredHomeTitle?.setText) {
                     window.InfraredHomeTitle.setText(nextText);
                 } else {
                     title.textContent = nextText;
