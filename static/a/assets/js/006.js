@@ -433,7 +433,7 @@ function importSaveData() {
         }
         alert("Your save data has been imported. Please test it out.");
         alert(
-          "If you find any issues then report it in GitHub or the Interstellar Discord.",
+          "If you find any issues then report it in GitHub or the ***** Discord.",
         );
       } catch (error) {
         console.error("Error parsing JSON file:", error);
