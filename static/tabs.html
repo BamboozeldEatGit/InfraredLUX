@@ -12,8 +12,20 @@
   <link rel="stylesheet" href="assets/css/global.css" />
   <link rel="stylesheet" href="assets/css/t.css" />
   <script src="/assets/js/frame-bridge.js"></script>
+  <script>
+    if (localStorage.getItem("infraredPageShelling") === "true") {
+      try {
+        if (window.parent === window || window.parent.document.querySelector("[data-shell-page]") === null) {
+          window.location.href = "/index.html";
+        }
+      } catch (e) {
+        window.location.href = "/index.html";
+      }
+    }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/split.js@1.6.0/dist/split.min.js"></script>
   <script>
     window.lucide?.createIcons({
       attrs: { width: 14, height: 14, strokeWidth: 2 }
@@ -76,6 +88,7 @@
   </div>
   <script src="/vendor/motion/motion.js"></script>
   <script src="assets/js/007.js?v=000"></script>
+  <script src="assets/js/page-shell.js"></script>
   <script src="./assets/mathematics/bundle.js?v=2025-04-15"></script>
   <script src="./assets/mathematics/config.js?v=2025-04-15"></script>
   <script src="/assets/js/001.js?v=001"></script>
@@ -152,6 +165,22 @@
           <!-- Suggestions will be populated here -->
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Layout Popup Island -->
+  <div id="layout-popup-island" class="layout-popup-island">
+    <div class="layout-option" data-layout="left-right" title="Split Left-Right">
+      <svg viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1">
+        <rect class="pane pane-left" x="2" y="2" width="30" height="44" rx="3" fill="transparent" />
+        <rect class="pane pane-right" x="40" y="2" width="30" height="44" rx="3" fill="transparent" />
+      </svg>
+    </div>
+    <div class="layout-option" data-layout="top-bottom" title="Split Top-Bottom">
+      <svg viewBox="0 0 72 48" fill="none" stroke="currentColor" stroke-width="1">
+        <rect class="pane pane-top" x="2" y="2" width="68" height="20" rx="3" fill="transparent" />
+        <rect class="pane pane-bottom" x="2" y="26" width="68" height="20" rx="3" fill="transparent" />
+      </svg>
     </div>
   </div>
 

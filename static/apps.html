@@ -14,7 +14,18 @@
   <link rel="stylesheet" href="/assets/css/global.css?v=6" />
   <link rel="stylesheet" href="/assets/css/container.css?v=2" />
   <link rel="stylesheet" href="/assets/css/nav.css?v=01" />
-  <script src="/assets/js/frame-bridge.js"></script>
+<script src="/assets/js/frame-bridge.js"></script>
+  <script>
+    if (localStorage.getItem("infraredPageShelling") === "true") {
+      try {
+        if (window.parent === window || window.parent.document.querySelector("[data-shell-page]") === null) {
+          window.location.href = "/index.html";
+        }
+      } catch (e) {
+        window.location.href = "/index.html";
+      }
+    }
+  </script>
   <script src="/assets/js/005.js?v=000"></script>
   <script src="assets/js/003.js?v=000"></script>
 </head>

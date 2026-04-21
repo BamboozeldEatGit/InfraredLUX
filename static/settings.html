@@ -12,6 +12,17 @@
   <link rel="stylesheet" id="global" href="/assets/css/global.css?v=6" />
   <link rel="stylesheet" href="/assets/css/settings.css?v=07" />
   <script src="/assets/js/frame-bridge.js"></script>
+  <script>
+    if (localStorage.getItem("infraredPageShelling") === "true") {
+      try {
+        if (window.parent === window || window.parent.document.querySelector("[data-shell-page]") === null) {
+          window.location.href = "/index.html";
+        }
+      } catch (e) {
+        window.location.href = "/index.html";
+      }
+    }
+  </script>
 </head>
 
 <body class="settings-body">
@@ -74,6 +85,16 @@
                 </svg>
               </span>
               <span class="settings-tab-label">Personalization</span>
+            </button>
+            <button class="settings-tab" type="button" data-settings-tab="performance" aria-selected="false">
+              <span class="settings-tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                  <path d="M12 2a10 10 0 1 0 10 10"></path>
+                  <path d="M12 2v10h10"></path>
+                </svg>
+              </span>
+              <span class="settings-tab-label">Performance</span>
             </button>
             <button class="settings-tab" type="button" data-settings-tab="about" aria-selected="false">
               <span class="settings-tab-icon" aria-hidden="true">
@@ -295,6 +316,30 @@
                 <div class="settings-row-control">
                   <label class="toggle-switch">
                     <input type="checkbox" id="toggle-animations" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-panel" data-settings-panel="performance" hidden>
+          <div class="settings-panel-header" data-animate-item>
+            <h2>Performance</h2>
+          </div>
+
+          <div class="settings-section">
+            <p class="settings-section-label" data-animate-item>Shell</p>
+            <div class="settings-card" data-animate-item>
+              <div class="settings-row">
+                <div class="settings-row-copy">
+                  <h3>Page Shelling</h3>
+                  <p>Pre-load all pages in a shell. Uses frame messaging instead of full navigation.</p>
+                </div>
+                <div class="settings-row-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-page-shelling" />
                     <span class="toggle-slider"></span>
                   </label>
                 </div>

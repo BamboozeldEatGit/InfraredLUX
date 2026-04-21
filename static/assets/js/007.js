@@ -533,13 +533,42 @@ document.addEventListener("DOMContentLoaded", event => {
     const selectedIframe = iframeContainer.querySelector(`[data-tab-id='${tabId}']`);
     if (selectedIframe) {
       selectedIframe.classList.add("active");
+      
+      // Update command box with current tab's URL
+      const commandBoxInput = document.getElementById("command-box-input");
+      if (commandBoxInput && selectedIframe.dataset.tabUrl) {
+        commandBoxInput.value = selectedIframe.dataset.tabUrl;
+      }
+      // Also update the URL bar in sidebar
+      const urlInput = document.getElementById("iv");
+      if (urlInput && selectedIframe.dataset.tabUrl) {
+        urlInput.value = selectedIframe.dataset.tabUrl;
+      }
     } else {
       console.log("No selected iframe found with ID:", tabId);
     }
   }
   let dragTab = null;
+  let draggedTabId = null;
+  let splitInstance = null;
+  
+  const layoutPopupIsland = document.getElementById("layout-popup-island");
+  
   tabList.addEventListener("dragstart", event => {
-    dragTab = event.target;
+    const tabItem = event.target.closest("li");
+    if (tabItem) {
+      dragTab = tabItem;
+      draggedTabId = tabItem.dataset.tabId;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggedTabId);
+      
+      // Show layout popup island after a short delay
+      setTimeout(() => {
+        if (layoutPopupIsland) {
+          layoutPopupIsland.classList.add("is-visible");
+        }
+      }, 200);
+    }
   });
   tabList.addEventListener("dragover", event => {
     event.preventDefault();
@@ -556,7 +585,353 @@ document.addEventListener("DOMContentLoaded", event => {
   });
   tabList.addEventListener("dragend", () => {
     dragTab = null;
+    draggedTabId = null;
+    if (layoutPopupIsland) {
+      layoutPopupIsland.classList.remove("is-visible");
+    }
   });
+  
+  // Handle layout option clicks
+  if (layoutPopupIsland) {
+    const layoutOptions = layoutPopupIsland.querySelectorAll(".layout-option");
+    layoutOptions.forEach(option => {
+      option.addEventListener("click", () => {
+        const layout = option.dataset.layout;
+        // Use stored tab ID if available from drop event
+        const pendingTabId = layoutPopupIsland.dataset.pendingTabId;
+        if (pendingTabId) {
+          draggedTabId = pendingTabId;
+          delete layoutPopupIsland.dataset.pendingTabId;
+        }
+        applySplitLayout(layout);
+        layoutPopupIsland.classList.remove("is-visible");
+      });
+      
+      // Handle hover detection for pane highlighting
+      option.addEventListener("mousemove", (e) => {
+        const rect = option.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const width = rect.width;
+        const height = rect.height;
+        const layout = option.dataset.layout;
+        
+        // Reset all highlights
+        option.classList.remove("pane-highlight-left", "pane-highlight-right", "pane-highlight-top", "pane-highlight-bottom");
+        
+        // Only highlight when cursor is exactly over a specific pane (tighter bounds)
+        if (layout === "left-right") {
+          const splitX = width * 0.44;
+          if (x > 2 && x < splitX) {
+            option.classList.add("pane-highlight-left");
+          } else if (x >= splitX && x < width - 2) {
+            option.classList.add("pane-highlight-right");
+          }
+        } else if (layout === "top-bottom") {
+          const splitY = height * 0.44;
+          if (y > 2 && y < splitY) {
+            option.classList.add("pane-highlight-top");
+          } else if (y >= splitY && y < height - 2) {
+            option.classList.add("pane-highlight-bottom");
+          }
+        }
+      });
+      
+      // Also handle dragover for when tabs are dragged onto the options
+      option.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const rect = option.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const width = rect.width;
+        const height = rect.height;
+        const layout = option.dataset.layout;
+        
+        option.classList.remove("pane-highlight-left", "pane-highlight-right", "pane-highlight-top", "pane-highlight-bottom");
+        
+        if (layout === "left-right") {
+          const splitX = width * 0.44;
+          if (x > 2 && x < splitX) {
+            option.classList.add("pane-highlight-left");
+          } else if (x >= splitX && x < width - 2) {
+            option.classList.add("pane-highlight-right");
+          }
+        } else if (layout === "top-bottom") {
+          const splitY = height * 0.44;
+          if (y > 2 && y < splitY) {
+            option.classList.add("pane-highlight-top");
+          } else if (y >= splitY && y < height - 2) {
+            option.classList.add("pane-highlight-bottom");
+          }
+        }
+      });
+      
+      option.addEventListener("dragleave", () => {
+        option.classList.remove("pane-highlight-left", "pane-highlight-right", "pane-highlight-top", "pane-highlight-bottom");
+      });
+      
+      // Handle drop on layout option - apply split immediately
+      option.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabId = e.dataTransfer.getData("text/plain");
+        if (!tabId) return;
+        
+        const layout = option.dataset.layout;
+        
+        // Determine which pane target was selected (for order)
+        const rect = option.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const width = rect.width;
+        const height = rect.height;
+        
+        let targetPosition = "right";
+        if (layout === "left-right") {
+          const splitX = width * 0.44;
+          if (x > 2 && x < splitX) {
+            targetPosition = "left";
+          }
+        } else if (layout === "top-bottom") {
+          const splitY = height * 0.44;
+          if (y > 2 && y < splitY) {
+            targetPosition = "top";
+          }
+        }
+        
+        // Apply split immediately
+        applySplitLayoutWithTab(tabId, layout, targetPosition);
+        
+        // Hide popup
+        if (layoutPopupIsland) {
+          layoutPopupIsland.classList.remove("is-visible");
+          delete layoutPopupIsland.dataset.pendingTabId;
+        }
+      });
+      
+      option.addEventListener("mouseleave", () => {
+        // Reset highlights but keep base classes
+        option.classList.remove("pane-highlight-left", "pane-highlight-right", "pane-highlight-top", "pane-highlight-bottom");
+      });
+    });
+  }
+  
+  function applySplitLayout(layout) {
+    if (!draggedTabId) return;
+    applySplitLayoutWithTab(draggedTabId, layout, "right");
+  }
+  
+  function applySplitLayoutWithTab(tabId, layout, targetPosition) {
+    const sourceTab = tabList.querySelector(`[data-tab-id="${tabId}"]`);
+    const sourceIframe = iframeContainer.querySelector(`[data-tab-id="${tabId}"]`);
+    const activeIframe = iframeContainer.querySelector("iframe.active") || iframeContainer.querySelector("iframe");
+    
+    if (!sourceTab || !sourceIframe || !activeIframe) return;
+    
+    // Remove existing split if any
+    const existingSplitWrappers = iframeContainer.querySelectorAll(".split-wrapper");
+    existingSplitWrappers.forEach(w => {
+      while (w.firstChild) {
+        iframeContainer.appendChild(w.firstChild);
+      }
+      w.remove();
+    });
+    iframeContainer.classList.remove("has-split");
+    if (splitInstance) {
+      splitInstance.destroy();
+      splitInstance = null;
+    }
+    
+    // Create wrapper divs
+    const wrap1 = document.createElement("div");
+    wrap1.className = "split-wrapper";
+    wrap1.style.width = "100%";
+    wrap1.style.height = "100%";
+    
+    const wrap2 = document.createElement("div");
+    wrap2.className = "split-wrapper";
+    wrap2.style.width = "100%";
+    wrap2.style.height = "100%";
+    
+    // Check which iframe is which for positioning
+    const sourceIsActive = sourceIframe === activeIframe;
+    
+    // Apply layout and border
+    if (layout === "left-right") {
+      if (targetPosition === "left") {
+        // Dropped tab on left, current active on right
+        wrap1.style.cssText = "width: 50%; height: 100%; float: left; box-sizing: border-box;";
+        wrap2.style.cssText = "width: 50%; height: 100%; float: left; box-sizing: border-box;";
+        
+        iframeContainer.appendChild(wrap1);
+        wrap1.appendChild(sourceIframe);
+        iframeContainer.appendChild(wrap2);
+        wrap2.appendChild(activeIframe);
+      } else {
+        // Current active on left, dropped tab on right
+        wrap1.style.cssText = "width: 50%; height: 100%; float: left; box-sizing: border-box;";
+        wrap2.style.cssText = "width: 50%; height: 100%; float: left; box-sizing: border-box;";
+        
+        iframeContainer.appendChild(wrap1);
+        wrap1.appendChild(activeIframe);
+        iframeContainer.appendChild(wrap2);
+        wrap2.appendChild(sourceIframe);
+      }
+      
+      // Add resize gutter
+      const gutter = document.createElement("div");
+      gutter.className = "split-gutter split-gutter-horizontal";
+      gutter.style.cssText = "width: 4px; height: 100%; float: left; cursor: col-resize; background: transparent; position: relative; z-index: 10;";
+      iframeContainer.appendChild(gutter);
+      setupGutterDrag(gutter, wrap1, wrap2, "horizontal");
+    } else {
+      // top-bottom
+      if (targetPosition === "top") {
+        // Dropped tab on top, current active on bottom
+        wrap1.style.cssText = "width: 100%; height: 50%; float: left; box-sizing: border-box;";
+        wrap2.style.cssText = "width: 100%; height: 50%; float: left; box-sizing: border-box;";
+        
+        iframeContainer.appendChild(wrap1);
+        wrap1.appendChild(sourceIframe);
+        iframeContainer.appendChild(wrap2);
+        wrap2.appendChild(activeIframe);
+      } else {
+        // Current active on top, dropped tab on bottom
+        wrap1.style.cssText = "width: 100%; height: 50%; float: left; box-sizing: border-box;";
+        wrap2.style.cssText = "width: 100%; height: 50%; float: left; box-sizing: border-box;";
+        
+        iframeContainer.appendChild(wrap1);
+        wrap1.appendChild(activeIframe);
+        iframeContainer.appendChild(wrap2);
+        wrap2.appendChild(sourceIframe);
+      }
+      
+      // Add resize gutter
+      const gutter = document.createElement("div");
+      gutter.className = "split-gutter split-gutter-vertical";
+      gutter.style.cssText = "width: 100%; height: 4px; float: left; cursor: row-resize; background: transparent; position: relative; z-index: 10;";
+      iframeContainer.appendChild(gutter);
+      setupGutterDrag(gutter, wrap1, wrap2, "vertical");
+    }
+    
+    // Make both iframes visible and full size
+    sourceIframe.style.display = "block";
+    sourceIframe.style.width = "100%";
+    sourceIframe.style.height = "100%";
+    activeIframe.style.display = "block";
+    activeIframe.style.width = "100%";
+    activeIframe.style.height = "100%";
+    
+    // Add split class to container for proper layout
+    if (iframeContainer) {
+      iframeContainer.classList.add("has-split");
+    }
+    
+    // Activate the dropped tab (sourceTab)
+    const allTabs = Array.from(tabList.querySelectorAll("li"));
+    for (const tab of allTabs) {
+      tab.classList.remove("active");
+    }
+    sourceTab.classList.add("active");
+    
+    // Activate the dropped tab's iframe
+    const allIframes = Array.from(iframeContainer.querySelectorAll("iframe"));
+    for (const iframe of allIframes) {
+      iframe.classList.remove("active");
+    }
+    sourceIframe.classList.add("active");
+    activeIframe.classList.remove("active");
+    
+    // Update URL bars
+    const commandBoxInput = document.getElementById("command-box-input");
+    const urlInput = document.getElementById("iv");
+    if (sourceIframe.dataset.tabUrl) {
+      if (commandBoxInput) commandBoxInput.value = sourceIframe.dataset.tabUrl;
+      if (urlInput) urlInput.value = sourceIframe.dataset.tabUrl;
+    }
+  }
+  
+  // Handle drop on frame container - show layout popup
+  if (iframeContainer) {
+    iframeContainer.addEventListener("dragover", event => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    });
+    
+    iframeContainer.addEventListener("drop", event => {
+      event.preventDefault();
+      const tabId = event.dataTransfer.getData("text/plain");
+      if (!tabId) return;
+      
+      // Store the dropped tab info for when user selects layout
+      const sourceTab = tabList.querySelector(`[data-tab-id="${tabId}"]`);
+      const sourceIframe = iframeContainer.querySelector(`[data-tab-id="${tabId}"]`);
+      
+      if (!sourceTab || !sourceIframe) return;
+      
+      // Show the layout popup instead of applying split directly
+      if (layoutPopupIsland) {
+        // Store the tab info on the popup for the click handler
+        layoutPopupIsland.dataset.pendingTabId = tabId;
+        layoutPopupIsland.classList.add("is-visible");
+      }
+      
+      // Also reset drag state since dragend might not fire reliably
+      dragTab = null;
+      draggedTabId = null;
+});
+  }
+  
+  // Setup gutter drag for resizing split panes
+  function setupGutterDrag(gutter, wrap1, wrap2, direction) {
+    let isDragging = false;
+    let startPos = 0;
+    let startSize1 = 0;
+    
+    gutter.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startPos = direction === "horizontal" ? e.clientX : e.clientY;
+      startSize1 = direction === "horizontal" ? wrap1.offsetWidth : wrap1.offsetHeight;
+      document.body.style.cursor = direction === "horizontal" ? "col-resize" : "row-resize";
+      document.body.style.userSelect = "none";
+      e.preventDefault();
+    });
+    
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      
+      const container = iframeContainer.getBoundingClientRect();
+      const currentPos = direction === "horizontal" ? e.clientX : e.clientY;
+      const delta = currentPos - startPos;
+      let newSize1 = startSize1 + delta;
+      const containerSize = direction === "horizontal" ? container.width : container.height;
+      
+      const minSize = 100;
+      const maxSize = containerSize - minSize;
+      newSize1 = Math.max(minSize, Math.min(maxSize, newSize1));
+      
+      const size1Percent = (newSize1 / containerSize) * 100;
+      const size2Percent = 100 - size1Percent;
+      
+      if (direction === "horizontal") {
+        wrap1.style.width = size1Percent + "%";
+        wrap2.style.width = size2Percent + "%";
+      } else {
+        wrap1.style.height = size1Percent + "%";
+        wrap2.style.height = size2Percent + "%";
+      }
+    });
+    
+    document.addEventListener("mouseup", () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    });
+  }
+
   createNewTab();
 
   // Check if command box should auto-open from Ctrl+K outside tabs

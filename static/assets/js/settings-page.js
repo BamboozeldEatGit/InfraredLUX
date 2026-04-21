@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const proxySelect = document.getElementById("pChange");
   const exportButton = document.getElementById("export-save");
   const importButton = document.getElementById("import-save");
+  const pageShellingToggle = document.getElementById("toggle-page-shelling");
 
   function getAnimationPreference() {
     try {
@@ -944,10 +945,24 @@ document.addEventListener("DOMContentLoaded", () => {
     applyPersonalizationSettings(settings);
   }
 
+  function initPerformanceSettings() {
+    if (pageShellingToggle) {
+      pageShellingToggle.checked = localStorage.getItem("infraredPageShelling") === "true";
+      pageShellingToggle.addEventListener("change", (e) => {
+        localStorage.setItem("infraredPageShelling", e.target.checked);
+        window.dispatchEvent(new CustomEvent("infrared:page-shelling-change", { detail: { enabled: e.target.checked } }));
+        if (!e.target.checked) {
+          window.location.href = "/home";
+        }
+      });
+    }
+  }
+
   syncSearchEngineUI();
   syncProxyUI();
   initKeyboardShortcuts();
   initPersonalization();
+  initPerformanceSettings();
   showPanel("general", true);
   
   const runInitialAnimation = () => {
