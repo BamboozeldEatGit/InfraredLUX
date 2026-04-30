@@ -4,273 +4,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal</title>
+    <title>Infrared</title>
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap");
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         html,
         body {
-            margin: 0;
             min-height: 100%;
         }
 
         body {
-            background: #0c0c0c;
-            color: #f2f2f2;
-            font-family: "Geist Mono", monospace;
+            background: #0a0a0b;
+            color: #fafafa;
+            font-family: "Outfit", sans-serif;
             overflow: hidden;
-        }
-
-        .window {
-            width: 100vw;
-            height: 100vh;
-            background: #0c0c0c;
-            overflow: hidden;
-        }
-
-        .screen {
-            height: 100vh;
-            padding: 18px 20px 24px;
-            background: #0c0c0c;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        .history {
-            font-size: 20px;
-            line-height: 1;
-            white-space: pre-wrap;
-            word-break: normal;
-        }
-
-        .line {
-            min-height: 1em;
-        }
-
-        .line.error {
-            color: #ff5f56;
-        }
-
-        .prompt-line {
             display: flex;
-            align-items: flex-start;
-            gap: 0;
-            margin-top: 0;
-            font-size: 20px;
-            line-height: 1;
-            white-space: pre-wrap;
-            word-break: break-word;
+            align-items: center;
+            justify-content: center;
         }
 
-        .prompt-text {
-            white-space: pre-wrap;
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            animation: fadeIn 0.6s ease-out;
         }
 
-        .banner {
-            margin: 0;
-            padding: 0;
-            display: block;
-            color: #f2f2f2;
-            font: inherit;
-            font-size: clamp(12px, 2.2vw, 24px);
-            line-height: 1;
-            white-space: pre;
-            max-width: 100%;
-            overflow: hidden;
-        }
-
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 1.15em;
-            margin-left: 2px;
-            background: #f2f2f2;
-            animation: blink 1s steps(1, end) infinite;
-            vertical-align: text-bottom;
-        }
-
-        .hidden-input {
-            position: absolute;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        @keyframes blink {
-            50% {
+        @keyframes fadeIn {
+            from {
                 opacity: 0;
+                transform: translateY(20px);
             }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 48px;
+            animation: slideUp 0.5s ease-out 0.1s both;
+        }
+
+        .logo h1 {
+            font-size: clamp(28px, 6vw, 42px);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #fafafa;
+            margin-bottom: 8px;
+        }
+
+        .logo p {
+            font-size: 14px;
+            color: #52525b;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideUp 0.5s ease-out 0.2s both;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 20px 24px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            color: #fafafa;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            background: #1f1f23;
+            border-color: #3f3f46;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-btn:active {
+            transform: translateY(0);
+        }
+
+        .option-btn .key {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #27272a;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #a1a1aa;
+        }
+
+        .option-btn:hover .key {
+            background: #3f3f46;
+            color: #fafafa;
+        }
+
+        .option-btn.close {
+            border-color: #3f1f1f;
+            background: #1f0f0f;
+        }
+
+        .option-btn.close:hover {
+            border-color: #4f1f1f;
+            background: #2a1212;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #27272a;
+            border-top-color: #fafafa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 48px;
+            animation: slideUp 0.5s ease-out 0.3s both;
+        }
+
+        .footer p {
+            font-size: 12px;
+            color: #3f3f46;
+            letter-spacing: 0.05em;
         }
 
         @media (max-width: 640px) {
-            .screen {
-                padding: 14px 16px 20px;
+            .container {
+                padding: 20px;
             }
 
-            .history,
-            .prompt-line {
-                font-size: 16px;
+            .option-btn {
+                padding: 18px 20px;
+                font-size: 15px;
             }
-
         }
     </style>
 </head>
 
 <body>
-    <main class="window" aria-label="Infrared launcher terminal">
-        <section class="screen">
-            <div class="history" id="history" aria-live="polite">
-                <pre class="banner">  ___ _   _ _____ ____      _    ____  _____ ____  
- |_ _| \ | |  ___|  _ \    / \  |  _ \| ____|  _ \ 
-  | ||  \| | |_  | |_) |  / _ \ | |_) |  _| | | | |
-  | || |\  |  _| |  _ &lt;  / ___ \|  _ &lt;| |___| |_| |
- |___|_| \_|_|   |_| \_\/_/   \_\_| \_\_____|____/ </pre>
-                <div class="line"></div>
-                <div class="line">Press Y to launch Infrared</div>
-                <div class="line">Press N to close</div>
-                <div class="line"></div>
-            </div>
-            <div class="prompt-line">
-                <span>C:\Infrared&gt;</span>
-                <span class="prompt-text" id="prompt-text"></span>
-                <span class="cursor" id="cursor"></span>
-            </div>
-            <input
-                id="command-input"
-                class="hidden-input"
-                type="text"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                spellcheck="false"
-                aria-label="Terminal input">
-        </section>
+    <main class="container">
+        <header class="logo">
+            <h1>Infrared</h1>
+            <p>Enterprise Protocol Suite</p>
+        </header>
+
+        <nav class="options" id="options">
+            <button class="option-btn" data-action="launch" data-key="Y">
+                <span>Launch Infrared</span>
+                <span class="key">Y</span>
+            </button>
+            <button class="option-btn close" data-action="close" data-key="N">
+                <span>Close</span>
+                <span class="key">N</span>
+            </button>
+        </nav>
+
+        <footer class="footer">
+            <p>Select an option to continue</p>
+        </footer>
     </main>
 
     <script>
-        const history = document.getElementById("history");
-        const screen = document.querySelector(".screen");
-        const promptText = document.getElementById("prompt-text");
-        const cursor = document.getElementById("cursor");
-        const commandInput = document.getElementById("command-input");
-        const launchTarget = atob("aHR0cHM6Ly9wcmV2aWV3LnRlaXRpb24uY29t");
+        const options = document.getElementById("options");
+        const buttons = options.querySelectorAll(".option-btn");
         let isProcessing = false;
 
-        focusInput();
-        syncPrompt();
+        document.addEventListener("keydown", (event) => {
+            if (isProcessing) return;
 
-        window.addEventListener("load", focusInput);
-        document.addEventListener("click", focusInput);
-        screen.addEventListener("click", focusInput);
+            const key = event.key.toLowerCase();
 
-        commandInput.addEventListener("input", syncPrompt);
-        commandInput.addEventListener("blur", () => {
-            if (!isProcessing) {
-                window.setTimeout(focusInput, 0);
+            if (key === "y" || key === "enter") {
+                event.preventDefault();
+                handleAction("launch");
+            } else if (key === "n" || key === "escape") {
+                event.preventDefault();
+                handleAction("close");
             }
         });
 
-        commandInput.addEventListener("keydown", (event) => {
-            if (isProcessing) {
-                event.preventDefault();
-                return;
-            }
-
-            const key = event.key;
-
-            if (key === "Enter") {
-                event.preventDefault();
-                executeCommand(commandInput.value);
-                return;
-            }
-
-            if (key === "Escape") {
-                event.preventDefault();
-                commandInput.value = "";
-                syncPrompt();
-                return;
-            }
+        buttons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                if (isProcessing) return;
+                const action = btn.dataset.action;
+                handleAction(action);
+            });
         });
 
-        function printLine(text = "", type = "") {
-            const line = document.createElement("div");
-            line.className = type ? `line ${type}` : "line";
-            line.textContent = text;
-            history.appendChild(line);
-            screen.scrollTop = screen.scrollHeight;
-        }
-
-        function focusInput() {
-            commandInput.focus({ preventScroll: true });
-        }
-
-        function syncPrompt() {
-            promptText.textContent = commandInput.value;
-            screen.scrollTop = screen.scrollHeight;
-        }
-
-        function executeCommand(rawValue) {
-            const command = rawValue.trim();
-
-            if (!command) {
-                printLine("C:\\Infrared>");
-                commandInput.value = "";
-                syncPrompt();
-                return;
-            }
-
+        function handleAction(action) {
+            if (isProcessing) return;
             isProcessing = true;
-            cursor.style.display = "none";
-            printLine(`C:\\Infrared>${command}`);
-            commandInput.value = "";
-            syncPrompt();
 
-            const normalized = command.toLowerCase();
+            const selectedBtn = document.querySelector(`[data-action="${action}"]`);
 
-            if (normalized === "y" || normalized === "launch" || normalized === "launch infrared") {
-                printLine("Launching Infrared...");
+            if (action === "launch") {
                 launchInfrared();
-                return;
-            }
-
-            if (normalized === "n" || normalized === "close" || normalized === "exit") {
-                printLine("Closing launcher...");
+            } else if (action === "close") {
                 closeLauncher();
-                return;
             }
-
-            printLine(`ERROR: "${command}" is not a valid option. Press Y to launch or N to close.`, "error");
-            finishCommand();
         }
 
         function launchInfrared() {
-            printLine("We regret to inform you that Infrared is temporarily down due to lack of funding.", "error");
-            finishCommand();
+            const btn = document.querySelector('[data-action="launch"]');
+            btn.innerHTML = '<span>Launching...</span><span class="spinner"></span>';
+            
+            setTimeout(() => {
+                btn.innerHTML = '<span>Launch Infrared</span><span class="key">Y</span>';
+                window.location.href = atob("aHR0cHM6Ly9wcmV2aWV3LnRlaXRpb24uY29t");
+            }, 800);
         }
 
         function closeLauncher() {
-            window.setTimeout(() => {
-                window.open("", "_self");
+            const btn = document.querySelector('[data-action="close"]');
+            btn.innerHTML = '<span>Closing...</span><span class="spinner"></span>';
+
+            setTimeout(() => {
                 window.close();
-
                 if (!window.closed) {
-                    printLine("ERROR: Browser blocked automatic close. Close this tab manually.", "error");
-                    finishCommand();
+                    btn.innerHTML = '<span>Close</span><span class="key">N</span>';
+                    isProcessing = false;
                 }
-            }, 120);
-        }
-
-        function finishCommand() {
-            isProcessing = false;
-            cursor.style.display = "inline-block";
-            focusInput();
-            syncPrompt();
+            }, 500);
         }
     </script>
 </body>
