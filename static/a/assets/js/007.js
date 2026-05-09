@@ -50,8 +50,7 @@ window.addEventListener("load", () => {
     const isRayser = localStorage.getItem("rayser") === "true";
     if (isRayser) {
       const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
-      const strippedUrl = url.startsWith("http") ? url.replace(/^https?:\/\//, '') : url;
-      const proxyUrl = proxyBase + "//" + strippedUrl;
+      const proxyUrl = proxyBase + "?url=" + encodeURIComponent(url);
       sessionStorage.setItem("GoUrl", proxyUrl);
       const iframeContainer = document.getElementById("frame-container");
       const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(

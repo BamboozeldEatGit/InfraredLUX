@@ -97,8 +97,7 @@ function tabsResolveFrameSrc(target, mode = "auto") {
 
   if (resolvedMode === "rayser") {
     const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
-    const url = rawTarget.startsWith("http") ? rawTarget.replace(/^https?:\/\//, '') : rawTarget;
-    return proxyBase + "//" + url;
+    return proxyBase + "?url=" + encodeURIComponent(rawTarget);
   }
 
   const preparedTarget = tabsResolveDisplayValue(rawTarget, resolvedMode);
