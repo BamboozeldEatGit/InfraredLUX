@@ -49,7 +49,7 @@ window.addEventListener("load", () => {
   function processUrl(url) {
     const isRayser = localStorage.getItem("rayser") === "true";
     if (isRayser) {
-      const proxyBase = "https://rayser.vercel.app/";
+      const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
       const fullUrl = url.startsWith("http") ? url : "https://" + url;
       const proxyUrl = proxyBase + fullUrl;
       sessionStorage.setItem("GoUrl", proxyUrl);

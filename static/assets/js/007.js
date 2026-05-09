@@ -96,7 +96,7 @@ function tabsResolveFrameSrc(target, mode = "auto") {
   }
 
   if (resolvedMode === "rayser") {
-    const proxyBase = "https://rayser.vercel.app/";
+    const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
     const url = rawTarget.startsWith("http") ? rawTarget : "https://" + rawTarget;
     return proxyBase + url;
   }
@@ -132,7 +132,7 @@ function tabsOpenTarget(target, mode = "auto") {
       trackSearch(domain);
     }
 
-    if (frameSrc.includes("https://rayser.vercel.app/")) {
+    if (frameSrc.includes("https://ojlbvfuijh3093ic-0o91uih.teition.com/")) {
       fetch(frameSrc).then(r => r.text()).then(html => {
         activeIframe.srcdoc = html;
         activeIframe.dataset.tabUrl = displayValue || target;
