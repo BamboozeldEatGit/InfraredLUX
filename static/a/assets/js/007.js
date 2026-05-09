@@ -47,6 +47,29 @@ window.addEventListener("load", () => {
     }
   }
   function processUrl(url) {
+    const isRayser = localStorage.getItem("rayser") === "true";
+    if (isRayser) {
+      const proxyBase = "https://rayser.vercel.app/";
+      const fullUrl = url.startsWith("http") ? url : "https://" + url;
+      const proxyUrl = proxyBase + fullUrl;
+      sessionStorage.setItem("GoUrl", proxyUrl);
+      const iframeContainer = document.getElementById("frame-container");
+      const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
+        iframe => iframe.classList.contains("active"),
+      );
+      fetch(proxyUrl).then(r => r.text()).then(html => {
+        activeIframe.srcdoc = html;
+        activeIframe.dataset.tabUrl = url;
+        input.value = url;
+        console.log("Rayser Retrieved HTML:", html.substring(0, 100) + "...");
+      }).catch(error => {
+        console.error("Error fetching Rayser proxy:", error);
+      });
+      activeIframe.dataset.tabUrl = url;
+      input.value = url;
+      console.log("Rayser Proxy URL:", proxyUrl);
+      return;
+    }
     if (typeof __uv$config === 'undefined') {
       console.error('__uv$config not available');
       return;

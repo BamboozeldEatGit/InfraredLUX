@@ -84,7 +84,7 @@ function tabsResolveFrameSrc(target, mode = "auto") {
   let resolvedMode = mode;
 
   if (resolvedMode === "auto") {
-    resolvedMode = isDirectTarget ? "direct" : (localStorage.getItem("dy") === "true" ? "dynamic" : "uv");
+    resolvedMode = isDirectTarget ? "direct" : (localStorage.getItem("rayser") === "true" ? "rayser" : (localStorage.getItem("dy") === "true" ? "dynamic" : "uv"));
   }
 
   if (resolvedMode === "direct" || isDirectTarget) {
@@ -93,6 +93,12 @@ function tabsResolveFrameSrc(target, mode = "auto") {
 
   if (typeof __uv$config === "undefined") {
     throw new Error("__uv$config not available");
+  }
+
+  if (resolvedMode === "rayser") {
+    const proxyBase = "https://rayser.vercel.app/";
+    const url = rawTarget.startsWith("http") ? rawTarget : "https://" + rawTarget;
+    return proxyBase + url;
   }
 
   const preparedTarget = tabsResolveDisplayValue(rawTarget, resolvedMode);
@@ -126,8 +132,17 @@ function tabsOpenTarget(target, mode = "auto") {
       trackSearch(domain);
     }
 
-    activeIframe.src = frameSrc.startsWith("http") ? frameSrc : `${window.location.origin}${frameSrc}`;
-    activeIframe.dataset.tabUrl = displayValue || target;
+    if (frameSrc.includes("https://rayser.vercel.app/")) {
+      fetch(frameSrc).then(r => r.text()).then(html => {
+        activeIframe.srcdoc = html;
+        activeIframe.dataset.tabUrl = displayValue || target;
+      }).catch(error => {
+        console.error("Error fetching Rayser proxy:", error);
+      });
+    } else {
+      activeIframe.src = frameSrc.startsWith("http") ? frameSrc : `${window.location.origin}${frameSrc}`;
+      activeIframe.dataset.tabUrl = displayValue || target;
+    }
 
     if (urlInput) {
       urlInput.value = displayValue || target;

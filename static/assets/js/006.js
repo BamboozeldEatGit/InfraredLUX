@@ -49,9 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedValue === "uv") {
       localStorage.setItem("uv", "true");
       localStorage.setItem("dy", "false");
+      localStorage.setItem("rayser", "false");
     } else if (selectedValue === "dy") {
       localStorage.setItem("uv", "false");
       localStorage.setItem("dy", "true");
+      localStorage.setItem("rayser", "false");
+    } else if (selectedValue === "rayser") {
+      localStorage.setItem("uv", "false");
+      localStorage.setItem("dy", "false");
+      localStorage.setItem("rayser", "true");
     }
   }
 
@@ -71,6 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.getItem("dy") === "auto"
     ) {
       pChangeElement.value = "dy";
+    } else if (localStorage.getItem("rayser") === "true") {
+      pChangeElement.value = "rayser";
     } else {
       pChangeElement.value = "uv";
     }

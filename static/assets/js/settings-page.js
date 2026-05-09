@@ -267,6 +267,8 @@ document.addEventListener("DOMContentLoaded", () => {
       proxySelect.value = "uv";
     } else if (storedDy === "true" || storedDy === "auto") {
       proxySelect.value = "dy";
+    } else if (localStorage.getItem("rayser") === "true") {
+      proxySelect.value = "rayser";
     } else {
       proxySelect.value = "uv";
     }
@@ -276,9 +278,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedValue === "dy") {
       localStorage.setItem("uv", "false");
       localStorage.setItem("dy", "true");
+      localStorage.setItem("rayser", "false");
+    } else if (selectedValue === "rayser") {
+      localStorage.setItem("uv", "false");
+      localStorage.setItem("dy", "false");
+      localStorage.setItem("rayser", "true");
     } else {
       localStorage.setItem("uv", "true");
       localStorage.setItem("dy", "false");
+      localStorage.setItem("rayser", "false");
     }
   }
 
