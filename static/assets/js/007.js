@@ -132,12 +132,8 @@ function tabsOpenTarget(target, mode = "auto") {
     }
 
     if (frameSrc.includes("https://ojlbvfuijh3093ic-0o91uih.teition.com/")) {
-      fetch(frameSrc).then(r => r.text()).then(html => {
-        activeIframe.srcdoc = html;
-        activeIframe.dataset.tabUrl = displayValue || target;
-      }).catch(error => {
-        console.error("Error fetching Rayser proxy:", error);
-      });
+      activeIframe.src = frameSrc;
+      activeIframe.dataset.tabUrl = displayValue || target;
     } else {
       activeIframe.src = frameSrc.startsWith("http") ? frameSrc : `${window.location.origin}${frameSrc}`;
       activeIframe.dataset.tabUrl = displayValue || target;
