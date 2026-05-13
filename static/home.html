@@ -12,6 +12,13 @@
     <link rel="stylesheet" href="/assets/css/h.css?v=01" />
     <link rel="stylesheet" href="/assets/css/nav.css?v=01" />
     <link rel="stylesheet" href="/assets/css/home_v3.css?v=08" />
+    <style>
+        @keyframes fadeInBounce {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+    </style>
 <script src="/assets/js/frame-bridge.js"></script>
   <script>
     if (localStorage.getItem("infraredPageShelling") === "true") {
@@ -27,6 +34,13 @@
 </head>
 
 <body>
+    <div id="intro-video-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: black;">
+        <video id="intro-video" style="width: 100%; height: 100%; object-fit: cover;">
+            <source src="/a/assets/media/infraredrecap.mov" type="video/quicktime">
+        </video>
+        <button id="skip-video" style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px; cursor: pointer; font-size: 16px;">Skip</button>
+        <div id="play-prompt" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; text-align: center; pointer-events: none;">Click anywhere to start</div>
+    </div>
     <div class="hidden-nav-overlay" id="hidden-nav-overlay">
         <div class="hidden-nav-links">
             <a href="/d" title="Tabs">Tabs</a>
@@ -65,6 +79,12 @@
                 <h1 class="title">INFRARED</h1>
                 <p class="subtitle" id="dynamic-subtitle">Using ***** to push boundary's of luxury at school</p>
             </div>
+        </div>
+    </div>
+
+    <div id="countdown-wrapper" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); padding: 4px; border-radius: 24px; animation: fadeInBounce 1s; z-index: 1000; opacity: 1; transition: opacity 0.3s;">
+        <div id="countdown" style="background: black; color: white; padding: 15px 25px; border-radius: 20px; align-items: center; gap: 10px; font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.5);">
+            <span>Freedom in:</span> <div id="countdown-time"></div>
         </div>
     </div>
 
@@ -641,6 +661,90 @@
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape") {
                 document.getElementById("global-command-box-overlay")?.classList.remove("active");
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const introOverlay = document.getElementById('intro-video-overlay');
+            const introVideo = document.getElementById('intro-video');
+            const skipBtn = document.getElementById('skip-video');
+
+            function hideIntro() {
+                introOverlay.style.display = 'none';
+                sessionStorage.setItem('introVideoShown', 'true');
+            }
+
+            if (!sessionStorage.getItem('introVideoShown')) {
+                introOverlay.style.display = 'block';
+
+                function startVideo(e) {
+                    if (e.target === skipBtn || skipBtn.contains(e.target)) return;
+                    introVideo.play().catch(console.error);
+                    document.getElementById('play-prompt').style.display = 'none';
+                    introOverlay.removeEventListener('click', startVideo);
+                }
+
+                introOverlay.addEventListener('click', startVideo);
+
+                skipBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    hideIntro();
+                });
+
+                introVideo.addEventListener('ended', hideIntro);
+            }
+        });
+
+        // Countdown timer
+        const targetDate = new Date('2026-05-27T15:35:00');
+        const wrapperEl = document.getElementById('countdown-wrapper');
+        const countdownEl = document.getElementById('countdown');
+        const countdownTimeEl = document.getElementById('countdown-time');
+        let interval;
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate - now;
+            if (diff <= 0) {
+                wrapperEl.style.opacity = '0';
+                if (interval) clearInterval(interval);
+                return;
+            }
+            const weeks = Math.floor(diff / (1000 * 60 * 60 * 24 * 7));
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24)) % 7;
+            const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+            const minutes = Math.floor(diff / (1000 * 60)) % 60;
+            const seconds = Math.floor(diff / 1000) % 60;
+            let parts = [];
+            if (weeks > 0) parts.push(`${weeks}w`);
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0) parts.push(`${minutes}m`);
+            if (seconds > 0) parts.push(`${seconds}s`);
+            countdownTimeEl.textContent = parts.join(' ');
+        }
+
+        const isVisible = sessionStorage.getItem('countdownVisible') !== 'false';
+        if (isVisible) {
+            wrapperEl.style.opacity = '1';
+            updateCountdown();
+            interval = setInterval(updateCountdown, 1000);
+        } else {
+            wrapperEl.style.opacity = '0';
+        }
+
+        countdownEl.addEventListener('click', () => {
+            if (wrapperEl.style.opacity === '1' || wrapperEl.style.opacity === '') {
+                wrapperEl.style.opacity = '0';
+                sessionStorage.setItem('countdownVisible', 'false');
+                if (interval) clearInterval(interval);
+            } else {
+                wrapperEl.style.opacity = '1';
+                sessionStorage.setItem('countdownVisible', 'true');
+                updateCountdown();
+                interval = setInterval(updateCountdown, 1000);
             }
         });
     </script>
