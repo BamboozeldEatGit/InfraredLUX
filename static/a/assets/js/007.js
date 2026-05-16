@@ -51,14 +51,28 @@ window.addEventListener("load", () => {
     if (isRayser) {
       const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
       const proxyUrl = proxyBase + "?url=" + encodeURIComponent(url);
-      sessionStorage.setItem("GoUrl", proxyUrl);
       const iframeContainer = document.getElementById("frame-container");
       const activeIframe = Array.from(iframeContainer.querySelectorAll("iframe")).find(
         iframe => iframe.classList.contains("active"),
       );
-      activeIframe.src = proxyUrl;
-      activeIframe.dataset.tabUrl = url;
-      input.value = url;
+      fetch(proxyUrl)
+        .then(r => r.text())
+        .then(html => {
+          const navScript = `<script>(function(){function sendNav(u){window.parent.postMessage({type:'rayser-navigate',url:u},'*');}document.addEventListener('click',e=>{const a=e.target.closest('a');if(a&&a.href){e.preventDefault();sendNav(a.href);}},true);document.addEventListener('submit',e=>{const f=e.target;if(f&&f.action){e.preventDefault();const p=new URLSearchParams(new FormData(f)).toString();sendNav(f.action+(f.method?.toLowerCase()==='get'&&p?'?'+p:''));}},true);window.location.assign=u=>sendNav(u);window.location.replace=u=>sendNav(u);Object.defineProperty(window.location,'href',{set:u=>sendNav(u)});})();</script>`;
+          const finalHtml = html.includes('</body>') ? html.replace('</body>', navScript + '</body>') : html + navScript;
+          const realUrl = sanitizeUrlInput(new URL(proxyUrl).searchParams.get("url") || url);
+          activeIframe.dataset.rayserProxy = proxyUrl;
+          activeIframe.dataset.tabUrl = realUrl;
+          input.value = realUrl;
+          const cmdInput = document.getElementById("command-box-input");
+          if (cmdInput) cmdInput.value = realUrl;
+          console.log("[Rayser] Initial open set URL →", realUrl);
+
+          activeIframe.srcdoc = finalHtml;
+        })
+        .catch(() => {
+          activeIframe.srcdoc = "<h1>Proxy error</h1>";
+        });
       console.log("Rayser Proxy URL:", proxyUrl);
       return;
     }
@@ -182,6 +196,15 @@ document.addEventListener("DOMContentLoaded", event => {
 
     tabTitle.textContent = resolvedTitle;
     setFallbackIcon(tabFallback, resolvedTitle);
+
+    // Keep URL bar in sync (same pattern as title) - Rayser safe
+    const urlInput = document.getElementById("iv");
+    if (urlInput && iframe.dataset.tabUrl) {
+      const full = sanitizeUrlInput(iframe.dataset.tabUrl);
+      const val = (urlInput === document.activeElement) ? full : (full.split('/')[2] || full);
+      urlInput.value = val;
+      console.log("[Rayser] updateTabMetadata set URL →", val);
+    }
   }
 
   const pendingGoUrl = localStorage.getItem("InfraredPendingGoUrl");
@@ -390,12 +413,30 @@ document.addEventListener("DOMContentLoaded", event => {
 function reload() {
   const activeIframe = document.querySelector("#frame-container iframe.active");
   if (activeIframe) {
-    // biome-ignore lint/correctness/noSelfAssign:
-    activeIframe.src = activeIframe.src;
+    if (activeIframe.srcdoc) {
+      const proxyUrl = activeIframe.dataset.rayserProxy || (() => {
+        const u = activeIframe.dataset.tabUrl;
+        return u ? "https://ojlbvfuijh3093ic-0o91uih.teition.com/?url=" + encodeURIComponent(u) : null;
+      })();
+      if (proxyUrl) {
+        fetch(proxyUrl).then(r => r.text()).then(html => {
+          const real = sanitizeUrlInput(new URL(proxyUrl).searchParams.get("url"));
+          activeIframe.dataset.rayserProxy = proxyUrl;
+          if (real) activeIframe.dataset.tabUrl = real;
+          console.log("[Rayser] Reload set URL →", real);
+          const navScript = `<script>(function(){function sendNav(u){window.parent.postMessage({type:'rayser-navigate',url:u},'*');}document.addEventListener('click',e=>{const a=e.target.closest('a');if(a&&a.href){e.preventDefault();sendNav(a.href);}},true);document.addEventListener('submit',e=>{const f=e.target;if(f&&f.action){e.preventDefault();const p=new URLSearchParams(new FormData(f)).toString();sendNav(f.action+(f.method?.toLowerCase()==='get'&&p?'?'+p:''));}},true);window.location.assign=u=>sendNav(u);window.location.replace=u=>sendNav(u);Object.defineProperty(window.location,'href',{set:u=>sendNav(u)});})();</script>`;
+          const final = html.includes('</body>') ? html.replace('</body>', navScript + '</body>') : html + navScript;
+          activeIframe.srcdoc = final;
+        });
+      }
+    } else {
+      activeIframe.src = activeIframe.src;
+    }
     Load();
   } else {
     console.error("No active iframe found");
   }
+}
 }
 
 // Popout
@@ -421,7 +462,11 @@ function popout() {
       style.border = style.outline = "none";
       style.width = style.height = "100%";
 
-      newIframe.src = activeIframe.src;
+      if (activeIframe.srcdoc) {
+        newIframe.srcdoc = activeIframe.srcdoc;
+      } else {
+        newIframe.src = activeIframe.src;
+      }
 
       newWindow.document.body.appendChild(newIframe);
     }
@@ -549,6 +594,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (urlInput) {
     urlInput.addEventListener("click", openCommandBox);
+
+    // Hard sanitize: never allow Rayser proxy string in the box
+    const sanitizeInputs = () => {
+      if (urlInput) urlInput.value = sanitizeUrlInput(urlInput.value);
+      const cmd = document.getElementById("command-box-input");
+      if (cmd) cmd.value = sanitizeUrlInput(cmd.value);
+    };
+    urlInput.addEventListener("input", sanitizeInputs);
+    urlInput.addEventListener("blur", sanitizeInputs);
+
+    // Rayser-friendly URL display: show only domain when not focused
+    urlInput.addEventListener("blur", () => {
+      const activeIframe = document.querySelector("#frame-container iframe.active");
+      if (activeIframe && activeIframe.dataset.tabUrl) {
+        const full = sanitizeUrlInput(activeIframe.dataset.tabUrl);
+        urlInput.value = full.split('/')[2] || full;
+      }
+    });
+    urlInput.addEventListener("focus", () => {
+      const activeIframe = document.querySelector("#frame-container iframe.active");
+      if (activeIframe && activeIframe.dataset.tabUrl) {
+        urlInput.value = sanitizeUrlInput(activeIframe.dataset.tabUrl);
+      }
+    });
   }
 
   if (commandBoxOverlay) {
@@ -594,10 +663,18 @@ if (navigator.userAgent.includes("Chrome") && navigator.keyboard && navigator.ke
 }
 function Load() {
   const activeIframe = document.querySelector("#frame-container iframe.active");
-  if (
-    activeIframe &&
-    activeIframe.contentWindow.document.readyState === "complete"
-  ) {
+  if (activeIframe) {
+    // Always prefer stored real URL for Rayser (never show proxy or about:srcdoc)
+    if (activeIframe.dataset.tabUrl) {
+      const raw = sanitizeUrlInput(activeIframe.dataset.tabUrl);
+      const display = document.getElementById("iv") === document.activeElement 
+        ? raw 
+        : (raw.split('/')[2] || raw);
+      document.getElementById("iv").value = display;
+      console.log("[Rayser] Load() used dataset.tabUrl →", display);
+      return;
+    }
+    if (!activeIframe.contentWindow || activeIframe.contentWindow.document.readyState !== "complete") return;
     const website = activeIframe.contentWindow.document.location.href;
     if (website.includes("/a/")) {
       const websitePath = website
@@ -637,3 +714,41 @@ function decodeXor(input) {
       .join("") + (search.length ? `?${search.join("?")}` : "")
   );
 }
+
+// Hard block for Rayser proxy URL ever appearing in the address bar
+function sanitizeUrlInput(val) {
+  if (!val) return val;
+  const bad = "https://ojlbvfuijh3093ic-0o91uih.teition.com/?url=";
+  if (val.includes(bad)) {
+    return val.split(bad)[1] || val;
+  }
+  return val;
+}
+
+// Rayser navigation re-render handler (for link clicks inside srcdoc)
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "rayser-navigate" && event.data.url) {
+    const activeIframe = document.querySelector("#frame-container iframe.active");
+    if (activeIframe) {
+      const proxyBase = "https://ojlbvfuijh3093ic-0o91uih.teition.com/";
+      const newProxyUrl = proxyBase + "?url=" + encodeURIComponent(event.data.url);
+      fetch(newProxyUrl)
+        .then(r => r.text())
+        .then(html => {
+          const navScript = `<script>(function(){function sendNav(u){window.parent.postMessage({type:'rayser-navigate',url:u},'*');}document.addEventListener('click',e=>{const a=e.target.closest('a');if(a&&a.href){e.preventDefault();sendNav(a.href);}},true);document.addEventListener('submit',e=>{const f=e.target;if(f&&f.action){e.preventDefault();const p=new URLSearchParams(new FormData(f)).toString();sendNav(f.action+(f.method?.toLowerCase()==='get'&&p?'?'+p:''));}},true);window.location.assign=u=>sendNav(u);window.location.replace=u=>sendNav(u);Object.defineProperty(window.location,'href',{set:u=>sendNav(u)});})();</script>`;
+          const final = html.includes('</body>') ? html.replace('</body>', navScript + '</body>') : html + navScript;
+          const realUrl = sanitizeUrlInput(new URL(newProxyUrl).searchParams.get("url") || event.data.url);
+          activeIframe.dataset.rayserProxy = newProxyUrl;
+          activeIframe.dataset.tabUrl = realUrl;
+          const uInput = document.getElementById("iv");
+          const cmdInput = document.getElementById("command-box-input");
+          if (uInput) uInput.value = realUrl;
+          if (cmdInput) cmdInput.value = realUrl;
+          console.log("[Rayser] Link navigation set URL →", realUrl);
+
+          activeIframe.srcdoc = final;
+        })
+        .catch(() => { activeIframe.srcdoc = "<h1>Proxy error</h1>"; });
+    }
+  }
+});
